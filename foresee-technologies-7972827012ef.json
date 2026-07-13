@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "foresee-technologies",
+  "private_key_id": "7972827012ef2d546c6ce01b8597b13a5f1314fa",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC9CfaU9zwXEcr1\n4CEHEVR4vtyx9W8QbCE/h39RUeoKeWqiPKp4kjUg1u6Zk7v8vtweLnF8intUBnfW\nhx2HtrpSM7KHw7cz3PpLEZAEQ5E2S7pWdeiMoKMhyVvg9NoJRjUcaOQ2YdaVN9sM\nEJezCGofAZ0/RFxwIhlBOTqfIrhtwA/44jwYl1ker6b+aosGRDE/4MEVvryaM/UI\nNuSpo1nnk6L68KchD5wtUAwhguCGSkvsJ4JaZLK0LA5jLHkFSvv2+5gb3U1KpIcX\naQMR+fe5pRL0UIK+DVS48aP7Tf3FAeUlp6nIBQhP+TRs62rCdPVSQYIzyC4XoDFZ\nS/H1eRwtAgMBAAECggEADNkOAL7dlHskQ69pdJJZdDa98icKVt/lJ0JdcANKDaSF\n5Pk25CiaYsfTge2YA7axvX1jlNbRSKXYjuSHqG8jXQM1eY5e4lqnn42AhRcAhLkD\nNO12PNniwcuZKoIJsEKsyRMEm6uXoB734hXd8ZA7V4MjvaaMRR9pfv+AO/Y/Tvog\n2hWgbFNpi7Uqf8OUn6FEIPPWKNO/gwoS6QeEZC6I3LXKuIksHmHYVW1o5lflJkav\nkvqZ54gDOz3fKhkbyfq1cQAECV0dSuN8ZbGdRIq9iPreJMsBfie5dDArXKNQ+dwB\nwqdCADEUVUYGpMZZgELTx+WOiBj1rh1nVrA4l2zzcQKBgQDyx6h3dtnujxNAnZZd\nBjtOfxPh1pcmJZVp94rIo53xTrDHkE5R8I13+ZQ7Y5wzhbZs3QnaG9pAxE6C57sC\n2DUwqw3nzcYUw/4Md4sfwmp/0galrui1gLGYkeJ168LJEzR6S9DVxIMGIcH67Y/A\nsduLIIjYrvl1bco3ZtlluLTGCQKBgQDHVShrhUo+xK0fZFb6e0QRw5vjUWYBI9gH\nrEm/LnpKIaC1StGTy4TA8Bxadt/p1DUV8ACrCxi1IQJy4Bf9gPqCCw/HRd9u26/I\ncaM6Yok6XarB7loimVB0RFDyYAugJGXD5erUd4FnUxWAZNWFzUJFluKpLLWjE9oW\no/3b42bOBQKBgQDstVJCODU/7WveAkgKpvrIDAq8lNeGL/q/+MTt3uktz4V47fAO\n4DVuln66cOJpMaOt/M2QRLvFjiDmbT3fBiLGMuE5811//aADU8Ln0ky4F3S3shPe\nc320vfhI9PdTyU/PNYCGDDWbkupo15rjTAY8XhpO+jrrDYKuBa9NCIvo0QKBgB1W\nrWJV9f2TGSAbtqmbZwNuVQ16N5dHXU6Tzy7yelFa7bqBTqOAOwPi02mFQaO69i1K\na+7A7VwLhb6+uQk46KYnVqUv5Zj9gLvx7eJ0Clqq2q08lcut4SebvoZOGKfzc38H\n4i5vgH5ivjFtpffRpEV11dqsl/duvpTCgmTQ7Zq5AoGBAOHBOCAYxCKWCqCU8xR2\nXWWx40PVNzpEOZq91x/8VJ6BWBCeWy8YlFNHwEjf471hEAS1YQHj076tacpiZ6xO\newC092A62k7ayMj0zhp195FF/4xlWqiSi/Mrd59p38VUBjIa4wwkVPo983/GEDk3\n4nuMLMBZ7C6OuELUHnRqy56g\n-----END PRIVATE KEY-----\n",
+  "client_email": "foresee-scanner@foresee-technologies.iam.gserviceaccount.com",
+  "client_id": "105740079187231836290",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/foresee-scanner%40foresee-technologies.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
