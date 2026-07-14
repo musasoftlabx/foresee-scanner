@@ -14,17 +14,15 @@ import {
 } from "react-native";
 
 // * Expo
+import {
+  Feather,
+  MaterialIcons,
+  MaterialCommunityIcons,
+  Octicons,
+} from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
-
-// * Router
 import { useNavigation, useRouter } from "expo-router";
 import { DrawerActions } from "expo-router/react-navigation";
-
-// * Icons
-import Feather from "@expo/vector-icons/build/Feather";
-import MaterialIcons from "@expo/vector-icons/build/MaterialIcons";
-import MaterialCommunityIcons from "@expo/vector-icons/build/MaterialCommunityIcons";
-import Octicons from "@expo/vector-icons/build/Octicons";
 
 // * Libraries
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -32,6 +30,10 @@ import axios, { AxiosError } from "axios";
 
 // * Hooks
 import { useTheme } from "@/hooks/use-theme";
+
+// * Components
+import ListEmptyComponent from "@/components/list-empty-component";
+import ListFooterComponent from "@/components/list-footer-component";
 
 // * Types
 type Store = {
@@ -417,62 +419,9 @@ export default function Stores() {
           </Pressable>
         )}
         ListFooterComponent={
-          isFetchingNextPage ? (
-            <View style={{ paddingVertical: 10, alignItems: "center" }}>
-              <ActivityIndicator size="small" color={colors.accent} />
-              <Text
-                style={{
-                  fontFamily: "JetBrainsMono",
-                  color: colors.textSecondary,
-                  fontSize: 11,
-                  marginTop: 8,
-                }}
-              >
-                Loading more stores...
-              </Text>
-            </View>
-          ) : null
+          <ListFooterComponent isFetchingNextPage={isFetchingNextPage} />
         }
-        ListEmptyComponent={
-          <View
-            style={{
-              alignItems: "center",
-              justifyContent: "center",
-              marginTop: 48,
-              paddingHorizontal: 24,
-            }}
-          >
-            <MaterialIcons
-              name="store"
-              size={80}
-              color={colors.textSecondary}
-              style={{ opacity: 0.4, marginBottom: 16 }}
-            />
-            <Text
-              style={{
-                fontFamily: "JetBrainsMono",
-                color: colors.textSecondary,
-                textAlign: "center",
-                fontSize: 14,
-                fontWeight: "600",
-              }}
-            >
-              No stores found.
-            </Text>
-            <Text
-              style={{
-                fontFamily: "JetBrainsMono",
-                color: colors.textSecondary,
-                textAlign: "center",
-                fontSize: 12,
-                marginTop: 8,
-                opacity: 0.7,
-              }}
-            >
-              Try adjusting your search filters
-            </Text>
-          </View>
-        }
+        ListEmptyComponent={<ListEmptyComponent entity="stores" />}
       />
     </View>
   );

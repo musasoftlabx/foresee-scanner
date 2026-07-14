@@ -81,15 +81,15 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         {/* <HeroUINativeProvider> */}
         <Stack
-          initialRouteName={
-            isLoggedIn && role === "Scanner" && Device.brand === "EA500"
-              ? "scan-location"
-              : isLoggedIn && role === "Scanner" && Device.brand !== "EA500"
-                ? "scan-location-with-camera"
-                : "(tabs)"
-            //:"locations"
-            //:"location"
-          }
+          // initialRouteName={
+          //   isLoggedIn && role === "Scanner" && Device.brand === "EA500"
+          //     ? "scan-location"
+          //     : isLoggedIn && role === "Scanner" && Device.brand !== "EA500"
+          //       ? "scan-location-with-camera"
+          //       : "(tabs)"
+          //   //:"locations"
+          //   //:"location"
+          // }
           screenOptions={{
             headerShown: false,
             headerStyle: { backgroundColor: "#f4511e" },

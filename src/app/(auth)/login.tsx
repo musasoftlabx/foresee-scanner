@@ -1,4 +1,8 @@
-import { useState } from "react";
+// * React
+// biome-ignore assist/source/organizeImports: <ignore lint: false positive>
+import { useEffect, useState } from "react";
+
+// * React Native
 import {
   View,
   Text,
@@ -9,59 +13,119 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
-  StyleSheet,
   Dimensions,
   Image,
+  Pressable,
 } from "react-native";
+
+// * Expo
+import * as LocalAuthentication from "expo-local-authentication";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { useRouter } from "expo-router";
-import { useTheme } from "@/hooks/use-theme";
-import { useMutation } from "@tanstack/react-query";
-import axios, { AxiosError } from "axios";
-import { useAuthStore } from "@/store/auth";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import Ionicons from "@expo/vector-icons/build/Ionicons";
+
+// * Libraries
 import { z } from "zod";
 import { Buffer } from "buffer";
+import { useForm, Controller } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
+
+// * Hooks
+import { useTheme } from "@/hooks/use-theme";
+
+// * Stores
+import { useAuthStore } from "@/store/auth";
+
+// * Components
+import { ThemeToggle } from "@/components/theme-toggle";
+import { MaterialIcons } from "@expo/vector-icons";
 
 const { width } = Dimensions.get("window");
 
 const loginSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  emailAddress: z.email("Invalid email."),
   password: z
     .string()
     .min(1, "Password is required")
     .min(6, "Password must be at least 6 characters"),
 });
 
-type LoginCredentials = z.infer<typeof loginSchema>;
+type Schema = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
+  // ? Hooks
   const { colors, isDark } = useTheme();
-  const [showPassword, setShowPassword] = useState(false);
-
-  const router = useRouter();
   const { login } = useAuthStore();
+  const router = useRouter();
 
+  // ? States
+  const [showPassword, setShowPassword] = useState(false);
+  const [isCompatible, setIsCompatible] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    async function checkDeviceCompatibility() {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      setIsCompatible(hasHardware);
+    }
+    checkDeviceCompatibility();
+  }, []);
+
+  async function handleBiometricAuth() {
+    try {
+      // Check if any biometric records (fingerprint/face) exist on the device
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+
+      if (!isEnrolled) {
+        return Alert.alert(
+          "Not Enrolled",
+          "No biometric records found. Please log in with a password or set up biometrics in device settings.",
+        );
+      }
+
+      // Authenticate using the system prompt
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: "Authenticate with Face ID or Fingerprint",
+        fallbackLabel: "Use Passcode", // iOS fallback button label
+        disableDeviceFallback: false, // Allows passcode if biometric fails
+      });
+
+      if (result.success) {
+        setIsAuthenticated(true);
+        Alert.alert("Success", "Authenticated successfully!");
+      } else {
+        Alert.alert(
+          "Authentication Failed",
+          result.error || "Please try again.",
+        );
+      }
+    } catch (error) {
+      Alert.alert("Error", "An unexpected error occurred.");
+    }
+  }
+
+  // ? Form
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid, isSubmitting, dirtyFields: dirty },
-  } = useForm<LoginCredentials>({
+    formState: { errors, isValid },
+  } = useForm<Schema>({
+    mode: "onChange",
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { emailAddress: "", password: "" },
   });
 
+  // ? Mutations
   const { mutate: loginMutation, isPending } = useMutation({
-    mutationFn: async (creds: LoginCredentials) => {
+    mutationFn: async (creds: Schema) => {
       const response = await axios.post("/login", creds);
       return response.data;
     },
   });
 
-  // Theme-aware gradient colors
+  // ? Theme-aware gradient colors
   const gradientColors: [string, string, string] = isDark
     ? ["#2d1b69", "#1e1b4b", "#1e1b4b"]
     : ["#faf5ff", "#f3e8ff", "#ede9fe"];
@@ -71,51 +135,60 @@ export default function LoginScreen() {
       colors={gradientColors}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={styles.container}
+      style={{ flex: 1 }}
     >
       <View
-        style={[
-          styles.bgOrbOne,
-          {
-            backgroundColor: isDark
-              ? "rgba(196,181,253,0.08)"
-              : "rgba(147,51,234,0.06)",
-          },
-        ]}
-      />
-      <View
-        style={[
-          styles.bgOrbTwo,
-          {
-            backgroundColor: isDark
-              ? "rgba(216,180,254,0.06)"
-              : "rgba(147,51,234,0.04)",
-          },
-        ]}
+        style={{
+          position: "absolute",
+          width: width * 0.72,
+          height: width * 0.72,
+          borderRadius: width,
+          top: -width * 0.25,
+          right: -width * 0.18,
+          backgroundColor: isDark
+            ? "rgba(196,181,253,0.08)"
+            : "rgba(147,51,234,0.06)",
+        }}
       />
 
-      {/* Theme toggle — top-right corner */}
-      <View style={styles.themeToggleWrapper}>
+      <View
+        style={{
+          position: "absolute",
+          width: width * 0.8,
+          height: width * 0.8,
+          borderRadius: width,
+          bottom: -width * 0.32,
+          left: -width * 0.22,
+          backgroundColor: isDark
+            ? "rgba(216,180,254,0.06)"
+            : "rgba(147,51,234,0.04)",
+        }}
+      />
+
+      <View className="absolute top-13.5 right-5 z-10">
         <ThemeToggle size={15} />
       </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardAvoid}
+        className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "center",
+            paddingHorizontal: 20,
+            paddingVertical: 26,
+          }}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.headerSection}>
+          <View className="items-center mb-7">
             <View
-              style={[
-                styles.logoBadge,
-                {
-                  borderColor: colors.border,
-                  backgroundColor: `${colors.accent}15`,
-                },
-              ]}
+              className="w-14.5 h-14.5 rounded-full border items-center justify-center mb-3.5"
+              style={{
+                borderColor: colors.border,
+                backgroundColor: `${colors.accent}15`,
+              }}
             >
               <Image
                 source={require("@/assets/images/foresee-logo.png")}
@@ -133,83 +206,80 @@ export default function LoginScreen() {
               Foresee Scanner
             </Text>
             <Text
-              style={[
-                styles.mainSubtitle,
-                {
-                  color: colors.textSecondary,
-                  fontFamily: "JetBrainsMono-Regular",
-                },
-              ]}
+              className="mt-1.5 text-[13px] tracking-[0.4px]"
+              style={{
+                color: colors.textSecondary,
+                fontFamily: "JetBrainsMono-Regular",
+              }}
             >
               Field Inventory Intelligence
             </Text>
           </View>
 
           <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.backgroundElement,
-                borderColor: colors.border,
-              },
-            ]}
+            className="rounded-[26px] p-6 border"
+            style={{
+              backgroundColor: colors.backgroundElement,
+              borderColor: colors.border,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 12 },
+              shadowOpacity: 0.15,
+              shadowRadius: 18,
+              elevation: 14,
+            }}
           >
             <Text
-              style={[
-                styles.welcomeEyebrow,
-                { color: colors.accent, fontFamily: "JetBrainsMono-Regular" },
-              ]}
+              className="text-xs uppercase mb-2 tracking-[1.2px]"
+              style={{
+                color: colors.accent,
+                fontFamily: "JetBrainsMono-Regular",
+              }}
             >
               Welcome Back
             </Text>
             <Text
-              style={[
-                styles.welcomeTitle,
-                { color: colors.text, fontFamily: "JetBrainsMono-Regular" },
-              ]}
+              className="text-[30px] font-bold mb-2 tracking-[0.4px]"
+              style={{
+                color: colors.text,
+                fontFamily: "JetBrainsMono-Regular",
+              }}
             >
               Sign In
             </Text>
             <Text
-              style={[
-                styles.welcomeSubtitle,
-                {
-                  color: colors.textSecondary,
-                  fontFamily: "JetBrainsMono-Regular",
-                },
-              ]}
+              className="text-[13px] mb-5.5 leading-5"
+              style={{
+                color: colors.textSecondary,
+                fontFamily: "JetBrainsMono-Regular",
+              }}
             >
               Access your store audits, scans, and reconciliation workflow.
             </Text>
 
-            <View style={styles.formSection}>
-              <View style={styles.inputGroup}>
+            <View className="mb-5">
+              <View className="mb-4">
                 <Text
-                  style={[
-                    styles.label,
-                    {
-                      color: colors.accent,
-                      fontFamily: "JetBrainsMono-Regular",
-                    },
-                  ]}
+                  className="text-xs font-semibold mb-2 tracking-[0.5px] uppercase"
+                  style={{
+                    color: colors.accent,
+                    fontFamily: "JetBrainsMono-Regular",
+                  }}
                 >
                   EMAIL ADDRESS
                 </Text>
                 <Controller
                   control={control}
-                  name="email"
+                  name="emailAddress"
                   render={({ field: { onChange, value } }) => (
                     <View>
                       <View
-                        style={[
-                          styles.inputShell,
-                          {
-                            borderColor: errors.email
-                              ? "#ef4444"
-                              : colors.border,
-                            backgroundColor: colors.background,
-                          },
-                        ]}
+                        className="flex-row items-center border rounded-xl px-3"
+                        style={{
+                          borderColor: errors.emailAddress
+                            ? "#ef4444"
+                            : colors.border,
+                          backgroundColor: colors.background,
+                        }}
                       >
                         <Ionicons
                           name="mail-outline"
@@ -217,13 +287,11 @@ export default function LoginScreen() {
                           color={colors.accent}
                         />
                         <TextInput
-                          style={[
-                            styles.input,
-                            {
-                              color: colors.text,
-                              fontFamily: "JetBrainsMono-Regular",
-                            },
-                          ]}
+                          className="flex-1 px-2.5 py-3 text-base"
+                          style={{
+                            color: colors.text,
+                            fontFamily: "JetBrainsMono-Regular",
+                          }}
                           placeholder="name@company.com"
                           placeholderTextColor={colors.textSecondary}
                           value={value}
@@ -233,14 +301,12 @@ export default function LoginScreen() {
                           editable={!isPending}
                         />
                       </View>
-                      {errors.email && (
+                      {errors.emailAddress && (
                         <Text
-                          style={[
-                            styles.errorText,
-                            { fontFamily: "JetBrainsMono-Regular" },
-                          ]}
+                          className="text-xs text-red-500 mt-1.5 px-1"
+                          style={{ fontFamily: "JetBrainsMono-Regular" }}
                         >
-                          {errors.email.message}
+                          {errors.emailAddress.message}
                         </Text>
                       )}
                     </View>
@@ -248,15 +314,13 @@ export default function LoginScreen() {
                 />
               </View>
 
-              <View style={styles.inputGroup}>
+              <View className="mb-4">
                 <Text
-                  style={[
-                    styles.label,
-                    {
-                      color: colors.accent,
-                      fontFamily: "JetBrainsMono-Regular",
-                    },
-                  ]}
+                  className="text-xs font-semibold mb-2 tracking-[0.5px] uppercase"
+                  style={{
+                    color: colors.accent,
+                    fontFamily: "JetBrainsMono-Regular",
+                  }}
                 >
                   PASSWORD
                 </Text>
@@ -266,30 +330,26 @@ export default function LoginScreen() {
                   render={({ field: { onChange, value } }) => (
                     <View>
                       <View
-                        style={[
-                          styles.passwordContainer,
-                          {
-                            borderColor: errors.password
-                              ? "#ef4444"
-                              : colors.border,
-                            backgroundColor: colors.background,
-                          },
-                        ]}
+                        className="flex-row items-center border rounded-xl"
+                        style={{
+                          borderColor: errors.password
+                            ? "#ef4444"
+                            : colors.border,
+                          backgroundColor: colors.background,
+                        }}
                       >
                         <Ionicons
                           name="lock-closed-outline"
                           size={18}
                           color={colors.accent}
-                          style={styles.passwordLeadingIcon}
+                          className="ml-3"
                         />
                         <TextInput
-                          style={[
-                            styles.passwordInput,
-                            {
-                              color: colors.text,
-                              fontFamily: "JetBrainsMono-Regular",
-                            },
-                          ]}
+                          className="flex-1 px-2.5 py-3 text-base"
+                          style={{
+                            color: colors.text,
+                            fontFamily: "JetBrainsMono-Regular",
+                          }}
                           placeholder="••••••••"
                           placeholderTextColor={colors.textSecondary}
                           value={value}
@@ -299,7 +359,7 @@ export default function LoginScreen() {
                         />
                         <TouchableOpacity
                           onPress={() => setShowPassword(!showPassword)}
-                          style={styles.eyeIcon}
+                          className="p-2 pr-4"
                           disabled={isPending}
                         >
                           <Ionicons
@@ -311,10 +371,8 @@ export default function LoginScreen() {
                       </View>
                       {errors.password && (
                         <Text
-                          style={[
-                            styles.errorText,
-                            { fontFamily: "JetBrainsMono-Regular" },
-                          ]}
+                          className="text-xs text-red-500 mt-1.5 px-1"
+                          style={{ fontFamily: "JetBrainsMono-Regular" }}
                         >
                           {errors.password.message}
                         </Text>
@@ -325,12 +383,15 @@ export default function LoginScreen() {
               </View>
 
               <TouchableOpacity
-                style={[
-                  styles.loginButton,
-                  { backgroundColor: colors.accent },
-                  (isPending || !isValid) && styles.loginButtonDisabled,
-                ]}
-                onPress={handleSubmit((formdata: LoginCredentials) =>
+                className={`py-3.5 rounded-[14px] mt-3 items-center justify-center${isPending || !isValid ? " opacity-70" : ""}`}
+                style={{
+                  backgroundColor: colors.accent,
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: 0.28,
+                  shadowRadius: 14,
+                  elevation: 7,
+                }}
+                onPress={handleSubmit((formdata: Schema) =>
                   loginMutation(
                     {
                       ...formdata,
@@ -360,18 +421,27 @@ export default function LoginScreen() {
                   <ActivityIndicator color={colors.background} size="small" />
                 ) : (
                   <Text
-                    style={[
-                      styles.loginButtonText,
-                      {
-                        color: colors.background,
-                        fontFamily: "JetBrainsMono-Regular",
-                      },
-                    ]}
+                    className="text-base font-bold tracking-[0.5px]"
+                    style={{
+                      color: colors.background,
+                      fontFamily: "JetBrainsMono-Regular",
+                    }}
                   >
                     Sign In
                   </Text>
                 )}
               </TouchableOpacity>
+
+              {isCompatible && !isAuthenticated && (
+                <Pressable onPress={handleBiometricAuth}>
+                  <MaterialIcons
+                    name="fingerprint"
+                    size={32}
+                    color={colors.accent}
+                    style={{ alignSelf: "center", marginTop: 20 }}
+                  />
+                </Pressable>
+              )}
             </View>
           </View>
         </ScrollView>
@@ -379,161 +449,3 @@ export default function LoginScreen() {
     </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  themeToggleWrapper: {
-    position: "absolute",
-    top: 54,
-    right: 20,
-    zIndex: 10,
-  },
-  bgOrbOne: {
-    position: "absolute",
-    width: width * 0.72,
-    height: width * 0.72,
-    borderRadius: width,
-    top: -width * 0.25,
-    right: -width * 0.18,
-  },
-  bgOrbTwo: {
-    position: "absolute",
-    width: width * 0.8,
-    height: width * 0.8,
-    borderRadius: width,
-    bottom: -width * 0.32,
-    left: -width * 0.22,
-  },
-  keyboardAvoid: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 26,
-  },
-  headerSection: {
-    alignItems: "center",
-    marginBottom: 28,
-  },
-  logoBadge: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 14,
-  },
-  mainSubtitle: {
-    marginTop: 6,
-    fontSize: 13,
-    letterSpacing: 0.4,
-  },
-  card: {
-    borderRadius: 26,
-    padding: 24,
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 12,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 18,
-    elevation: 14,
-  },
-  welcomeEyebrow: {
-    fontSize: 12,
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    marginBottom: 8,
-  },
-  welcomeTitle: {
-    fontSize: 30,
-    fontWeight: "700",
-    marginBottom: 8,
-    letterSpacing: 0.4,
-  },
-  welcomeSubtitle: {
-    fontSize: 13,
-    marginBottom: 22,
-    lineHeight: 20,
-  },
-  formSection: {
-    marginBottom: 20,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginBottom: 8,
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  inputShell: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-  },
-  input: {
-    flex: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-    fontSize: 16,
-  },
-  passwordContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 12,
-  },
-  passwordLeadingIcon: {
-    marginLeft: 12,
-  },
-  passwordInput: {
-    flex: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-    fontSize: 16,
-  },
-  eyeIcon: {
-    paddingRight: 16,
-    padding: 8,
-  },
-  loginButton: {
-    paddingVertical: 14,
-    borderRadius: 14,
-    marginTop: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.28,
-    shadowRadius: 14,
-    elevation: 7,
-  },
-  loginButtonDisabled: {
-    opacity: 0.7,
-  },
-  loginButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-  },
-  errorText: {
-    fontSize: 12,
-    color: "#ef4444",
-    marginTop: 6,
-    paddingHorizontal: 4,
-  },
-});

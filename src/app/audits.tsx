@@ -1,4 +1,8 @@
+// * React
+// biome-ignore assist/source/organizeImports: <ignore lint: false positive>
 import { useCallback, useLayoutEffect } from "react";
+
+// * React Native
 import {
   ActivityIndicator,
   FlatList,
@@ -6,13 +10,28 @@ import {
   Text,
   View,
 } from "react-native";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+
+// * Expo
 import { StatusBar } from "expo-status-bar";
+
+// * Router
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+
+// * Icons
+import MaterialIcons from "@expo/vector-icons/build/MaterialIcons";
+
+// * Libraries
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import axios, { AxiosError } from "axios";
+import dayjs from "dayjs";
+
+// * Hooks
 import { useTheme } from "@/hooks/use-theme";
 
+// * Components
+import ListEmptyComponent from "@/components/list-empty-component";
+
+// * Types
 type AuditRouteParams = {
   id?: string;
   code?: string;
@@ -27,19 +46,6 @@ type Audit = {
   locations: number;
   scans: number;
 };
-
-function formatAuditDate(value: string) {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return parsed.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 function getCoveragePalette(coverage: number, isDark: boolean) {
   if (coverage < 40) {
@@ -91,10 +97,8 @@ export default function Audits() {
     navigation.setOptions({
       headerShown: true,
       headerTitle: `Audits under ${name}`,
-      headerStyle: {
-        backgroundColor: colors.headerBackground,
-        fontFamily: "JetBrainsMono",
-      },
+      headerTitleStyle: { fontFamily: "JetBrainsMono" },
+      headerStyle: { backgroundColor: colors.headerBackground },
       headerTintColor: colors.headerTint,
     });
   }, [navigation, name, colors]);
@@ -210,6 +214,7 @@ export default function Audits() {
         data={data}
         keyExtractor={(item) => item.id}
         columnWrapperStyle={{ gap: 12 }}
+        numColumns={2}
         contentContainerStyle={{ gap: 12, paddingBottom: 16 }}
         refreshing={isRefetching}
         onRefresh={refreshStores}
@@ -267,7 +272,7 @@ export default function Audits() {
                     }}
                     numberOfLines={1}
                   >
-                    {formatAuditDate(item.date)}
+                    {dayjs(item.date).format("DD MMM, YYYY")}
                   </Text>
                 </View>
 
