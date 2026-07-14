@@ -19,6 +19,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import debounce from "lodash/debounce";
+import { useTheme } from "@/hooks/use-theme";
 
 type AuditRouteParams = { id?: string; code?: string };
 
@@ -51,35 +52,37 @@ function formatScanDate(value: string) {
   });
 }
 
-function getVariancePalette(variance: number) {
+function getVariancePalette(variance: number, isDark: boolean) {
   if (variance === 0) {
     return {
-      border: "border-emerald-300/35",
-      badgeWrap: "bg-emerald-400/20 border-emerald-300/35",
-      badgeText: "text-emerald-200",
-      arrow: "#a7f3d0",
-      arrowText: "text-emerald-200",
+      borderColor: isDark ? "rgba(167,243,208,0.35)" : "rgba(16,185,129,0.3)",
+      badgeBg: isDark ? "rgba(52,211,153,0.2)" : "rgba(16,185,129,0.1)",
+      badgeBorderColor: isDark
+        ? "rgba(167,243,208,0.35)"
+        : "rgba(16,185,129,0.3)",
+      badgeText: isDark ? "#a7f3d0" : "#065f46",
+      arrowColor: isDark ? "#a7f3d0" : "#059669",
       label: "Balanced",
     };
   }
-
   if (Math.abs(variance) <= 5) {
     return {
-      border: "border-amber-300/35",
-      badgeWrap: "bg-amber-400/20 border-amber-300/35",
-      badgeText: "text-amber-100",
-      arrow: "#fde68a",
-      arrowText: "text-amber-100",
+      borderColor: isDark ? "rgba(253,230,138,0.35)" : "rgba(245,158,11,0.3)",
+      badgeBg: isDark ? "rgba(251,191,36,0.2)" : "rgba(245,158,11,0.1)",
+      badgeBorderColor: isDark
+        ? "rgba(253,230,138,0.35)"
+        : "rgba(245,158,11,0.3)",
+      badgeText: isDark ? "#fde68a" : "#92400e",
+      arrowColor: isDark ? "#fde68a" : "#d97706",
       label: "Minor Drift",
     };
   }
-
   return {
-    border: "border-rose-300/35",
-    badgeWrap: "bg-rose-400/20 border-rose-300/35",
-    badgeText: "text-rose-200",
-    arrow: "#fecdd3",
-    arrowText: "text-rose-200",
+    borderColor: isDark ? "rgba(252,165,165,0.35)" : "rgba(239,68,68,0.3)",
+    badgeBg: isDark ? "rgba(251,113,133,0.2)" : "rgba(239,68,68,0.1)",
+    badgeBorderColor: isDark ? "rgba(252,165,165,0.35)" : "rgba(239,68,68,0.3)",
+    badgeText: isDark ? "#fecdd3" : "#b91c1c",
+    arrowColor: isDark ? "#fecdd3" : "#dc2626",
     label: "High Drift",
   };
 }
@@ -90,6 +93,7 @@ export default function Locations() {
   const { width, height } = useWindowDimensions();
   const navigation = useNavigation();
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const auditId = 4; //Number(id);
   const hasValidAuditId = Number.isFinite(auditId);
 
@@ -377,7 +381,7 @@ export default function Locations() {
       headerTitle: () => (
         <View style={{ alignItems: "center", flexDirection: "row" }}>
           <MaterialIcons
-            color="white"
+            color={colors.headerTint}
             name="search"
             size={24}
             style={{ marginRight: 12 }}
@@ -391,10 +395,10 @@ export default function Locations() {
               setSearchQuery(text)
             )}
             placeholder="Search Locations"
-            placeholderTextColor="rgba(255, 255, 255, 0.7)"
+            placeholderTextColor={`${colors.headerTint}99`}
             returnKeyType="search"
             style={{
-              color: "white",
+              color: colors.headerTint,
               fontFamily: "JetBrainsMono",
               fontSize: 20,
               width: Dimensions.get("window").width * 0.55,
@@ -490,9 +494,9 @@ export default function Locations() {
         </View>
       ), */
       headerStyle: {
-        backgroundColor: "#59168b",
+        backgroundColor: colors.headerBackground,
       },
-      headerTintColor: "white",
+      headerTintColor: colors.headerTint,
       headerRight: () => null,
       headerTitleContainerStyle: {
         left: 0,
@@ -500,7 +504,7 @@ export default function Locations() {
         alignItems: "center",
       },
     });
-  }, [navigation, searchQuery, width]);
+  }, [navigation, searchQuery, colors, debounced]);
 
   const refresh = useCallback(async () => await refetch(), [refetch]);
 
@@ -546,8 +550,10 @@ export default function Locations() {
   }, [closeRecountModal]);
 
   return (
-    <View className="flex flex-1 bg-purple-100 dark:bg-purple-900 pt-6">
-      <StatusBar style="dark" animated />
+    <View
+      style={{ flex: 1, backgroundColor: colors.background, paddingTop: 24 }}
+    >
+      <StatusBar style={isDark ? "light" : "dark"} animated />
 
       <FlatList
         horizontal
@@ -605,10 +611,14 @@ export default function Locations() {
           <View style={{ paddingVertical: 12, alignItems: "center" }}>
             {isFetchingNextPage ? (
               <>
-                <ActivityIndicator size="small" color="white" />
+                <ActivityIndicator size="small" color={colors.accent} />
                 <Text
-                  style={{ fontFamily: "JetBrainsMono", marginTop: 6 }}
-                  className="text-white/80 text-xs"
+                  style={{
+                    fontFamily: "JetBrainsMono",
+                    color: colors.textSecondary,
+                    fontSize: 11,
+                    marginTop: 6,
+                  }}
                 >
                   Loading more locations...
                 </Text>
@@ -616,19 +626,32 @@ export default function Locations() {
             ) : hasNextPage ? (
               <Pressable
                 onPress={loadMoreLocations}
-                className="rounded-lg border border-white/30 bg-white/10 px-3 py-2"
+                style={{
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.backgroundElement,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                }}
               >
                 <Text
-                  style={{ fontFamily: "JetBrainsMono" }}
-                  className="text-white/90 text-xs"
+                  style={{
+                    fontFamily: "JetBrainsMono",
+                    color: colors.textSecondary,
+                    fontSize: 11,
+                  }}
                 >
                   Load more
                 </Text>
               </Pressable>
             ) : locations.length > 0 ? (
               <Text
-                style={{ fontFamily: "JetBrainsMono" }}
-                className="text-white/60 text-xs"
+                style={{
+                  fontFamily: "JetBrainsMono",
+                  color: colors.textSecondary,
+                  fontSize: 11,
+                }}
               >
                 You have reached the end.
               </Text>
@@ -637,7 +660,7 @@ export default function Locations() {
         }
         renderItem={({ item: location }) => {
           const variance = location.physicalCount - location.systemCount;
-          const palette = getVariancePalette(variance);
+          const palette = getVariancePalette(variance, isDark);
 
           return (
             <Pressable
@@ -647,162 +670,247 @@ export default function Locations() {
                   params: { storecode: location.id },
                 })
               }
-              className={`rounded-2xl border bg-white/12 px-3.5 py-3.5 ${palette.border}`}
               style={({ pressed }) => ({
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: palette.borderColor,
+                backgroundColor: colors.backgroundElement,
+                paddingHorizontal: 14,
+                paddingVertical: 14,
+                marginBottom: 10,
                 opacity: pressed ? 0.92 : 1,
                 transform: [{ scale: pressed ? 0.99 : 1 }],
-                marginBottom: 10,
               })}
             >
-              <View className="flex-row items-start justify-between">
-                <View className="flex-1 pr-2">
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                }}
+              >
+                <View style={{ flex: 1, paddingRight: 8 }}>
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white text-base"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.text,
+                      fontSize: 15,
+                    }}
                     numberOfLines={1}
                   >
                     Location {location.id}
                   </Text>
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white/70 text-[11px] mt-1"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.textSecondary,
+                      fontSize: 11,
+                      marginTop: 4,
+                    }}
                   >
                     {formatScanDate(location.modified.on)}
                   </Text>
                 </View>
 
                 <View
-                  className={`rounded-full border px-2 py-1 ${palette.badgeWrap}`}
+                  style={{
+                    borderRadius: 50,
+                    borderWidth: 1,
+                    borderColor: palette.badgeBorderColor,
+                    backgroundColor: palette.badgeBg,
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                  }}
                 >
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className={`text-[10px] ${palette.badgeText}`}
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: palette.badgeText,
+                      fontSize: 10,
+                    }}
                   >
                     {palette.label}
                   </Text>
                 </View>
               </View>
 
-              <View className="mt-3 flex-row gap-2">
-                <View className="py-2 items-center justify-center">
+              <View style={{ marginTop: 12, flexDirection: "row", gap: 8 }}>
+                <View
+                  style={{
+                    paddingVertical: 8,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white/75 text-[10px]"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.textSecondary,
+                      fontSize: 10,
+                    }}
                   >
                     Physical
                   </Text>
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white text-2xl mt-1"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.text,
+                      fontSize: 22,
+                      marginTop: 4,
+                    }}
                   >
                     {location.physicalCount}
                   </Text>
                 </View>
 
-                <View className="w-px bg-white/20 mx-2" />
+                <View
+                  style={{
+                    width: 1,
+                    backgroundColor: colors.border,
+                    marginHorizontal: 8,
+                  }}
+                />
 
-                <View className="py-2 items-center justify-center">
+                <View
+                  style={{
+                    paddingVertical: 8,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white/75 text-[10px]"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.textSecondary,
+                      fontSize: 10,
+                    }}
                   >
                     System
                   </Text>
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white text-2xl mt-1"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.text,
+                      fontSize: 22,
+                      marginTop: 4,
+                    }}
                   >
                     {location.systemCount}
                   </Text>
                 </View>
 
-                {/* <View className="flex-1 rounded-lg border border-white/20 bg-black/15 px-2.5 py-2">
-                  <View className="flex-row items-center justify-between">
-                    <Text
-                      style={{ fontFamily: "JetBrainsMono" }}
-                      className="text-white/80 text-[10px]"
-                    >
-                      Variance
-                    </Text>
-                    <Text
-                      style={{ fontFamily: "JetBrainsMono" }}
-                      className={`text-[10px] ${palette.badgeText}`}
-                    >
-                      {variance > 0 ? `+${variance}` : variance}
-                    </Text>
-                  </View>
-                </View> */}
+                <View style={{ flex: 1 }} />
 
-                <View className="flex flex-1" />
-
-                <View className="pl-2.5 py-2 items-center justify-center">
+                <View
+                  style={{
+                    paddingLeft: 10,
+                    paddingVertical: 8,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white/75 text-[10px]"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.textSecondary,
+                      fontSize: 10,
+                    }}
                   >
                     Variance
                   </Text>
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className={`${palette.badgeText} text-white text-2xl mt-1`}
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: palette.badgeText,
+                      fontSize: 22,
+                      marginTop: 4,
+                    }}
                   >
                     {variance > 0 ? `+${variance}` : variance}
                   </Text>
                 </View>
               </View>
 
-              <View className="mt-3 flex-row items-center justify-between">
-                <View className="flex-1 flex-row gap-2">
-                  <Pressable
-                    onPress={() => confirmRescan(location.id)}
-                    className="flex-1 flex-row items-center justify-center rounded-xl border border-white/25 bg-black/20 py-2.5"
-                    style={({ pressed }) => ({
-                      opacity: pressed ? 0.9 : 1,
-                      transform: [{ scale: pressed ? 0.98 : 1 }],
-                    })}
+              <View style={{ marginTop: 12, flexDirection: "row", gap: 8 }}>
+                <Pressable
+                  onPress={() => confirmRescan(location.id)}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    backgroundColor: isDark
+                      ? "rgba(0,0,0,0.2)"
+                      : colors.backgroundSelected,
+                    paddingVertical: 10,
+                    opacity: pressed ? 0.9 : 1,
+                    transform: [{ scale: pressed ? 0.98 : 1 }],
+                  })}
+                >
+                  <MaterialIcons
+                    name="qr-code-scanner"
+                    size={15}
+                    color={palette.arrowColor}
+                  />
+                  <Text
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: palette.arrowColor,
+                      fontSize: 11,
+                      marginLeft: 6,
+                    }}
                   >
-                    <MaterialIcons
-                      name="qr-code-scanner"
-                      size={15}
-                      color={palette.arrow}
-                    />
-                    <Text
-                      style={{ fontFamily: "JetBrainsMono" }}
-                      className={`text-[11px] ml-1.5 ${palette.arrowText}`}
-                    >
-                      Rescan
-                    </Text>
-                  </Pressable>
+                    Rescan
+                  </Text>
+                </Pressable>
 
-                  <Pressable
-                    onPress={() => openRecountModal(location.id)}
-                    className="flex-1 flex-row items-center justify-center rounded-xl border border-white/25 bg-white/12 py-2.5"
-                    style={({ pressed }) => ({
-                      opacity: pressed ? 0.9 : 1,
-                      transform: [{ scale: pressed ? 0.98 : 1 }],
-                    })}
+                <Pressable
+                  onPress={() => openRecountModal(location.id)}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    backgroundColor: colors.backgroundSelected,
+                    paddingVertical: 10,
+                    opacity: pressed ? 0.9 : 1,
+                    transform: [{ scale: pressed ? 0.98 : 1 }],
+                  })}
+                >
+                  <MaterialIcons
+                    name="playlist-add-check-circle"
+                    size={15}
+                    color={palette.arrowColor}
+                  />
+                  <Text
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: palette.arrowColor,
+                      fontSize: 11,
+                      marginLeft: 6,
+                    }}
                   >
-                    <MaterialIcons
-                      name="playlist-add-check-circle"
-                      size={15}
-                      color={palette.arrow}
-                    />
-                    <Text
-                      style={{ fontFamily: "JetBrainsMono" }}
-                      className={`text-[11px] ml-1.5 ${palette.arrowText}`}
-                    >
-                      Recount
-                    </Text>
-                  </Pressable>
-                </View>
+                    Recount
+                  </Text>
+                </Pressable>
               </View>
             </Pressable>
           );
         }}
         ListEmptyComponent={
           <Text
-            style={{ fontFamily: "JetBrainsMono" }}
-            className="text-white/80 text-center mt-8"
+            style={{
+              fontFamily: "JetBrainsMono",
+              color: colors.textSecondary,
+              textAlign: "center",
+              marginTop: 32,
+            }}
           >
             No locations found.
           </Text>
@@ -815,19 +923,44 @@ export default function Locations() {
         animationType="fade"
         onRequestClose={closeRecountModal}
       >
-        <View className="flex-1 items-center justify-center bg-black/50 px-6">
-          <View className="w-full rounded-2xl border border-white/25 bg-[#2c1450] px-4 py-4">
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(0,0,0,0.55)",
+            paddingHorizontal: 24,
+          }}
+        >
+          <View
+            style={{
+              width: "100%",
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: colors.border,
+              backgroundColor: colors.backgroundElement,
+              paddingHorizontal: 16,
+              paddingVertical: 16,
+            }}
+          >
             <Text
-              style={{ fontFamily: "JetBrainsMono" }}
-              className="text-white text-base"
+              style={{
+                fontFamily: "JetBrainsMono",
+                color: colors.text,
+                fontSize: 15,
+              }}
             >
               Update Physical Count
             </Text>
 
             {selectedLocationId ? (
               <Text
-                style={{ fontFamily: "JetBrainsMono" }}
-                className="text-white/70 text-xs mt-1"
+                style={{
+                  fontFamily: "JetBrainsMono",
+                  color: colors.textSecondary,
+                  fontSize: 12,
+                  marginTop: 4,
+                }}
               >
                 Location {selectedLocationId}
               </Text>
@@ -838,22 +971,50 @@ export default function Locations() {
               onChangeText={setNewPhysicalCount}
               keyboardType="number-pad"
               placeholder="New Physical Count"
-              placeholderTextColor="rgba(255,255,255,0.55)"
-              className="mt-4 rounded-xl border border-white/25 bg-black/20 px-3 py-3 text-white"
-              style={{ fontFamily: "JetBrainsMono" }}
+              placeholderTextColor={
+                isDark ? "rgba(165,180,252,0.5)" : "rgba(99,102,241,0.4)"
+              }
+              style={{
+                marginTop: 16,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: isDark
+                  ? "rgba(0,0,0,0.2)"
+                  : colors.backgroundSelected,
+                paddingHorizontal: 12,
+                paddingVertical: 12,
+                color: colors.text,
+                fontFamily: "JetBrainsMono",
+              }}
             />
 
-            <View className="mt-4 flex-row justify-end gap-2">
+            <View
+              style={{
+                marginTop: 16,
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                gap: 8,
+              }}
+            >
               <Pressable
                 onPress={closeRecountModal}
-                className="rounded-xl border border-white/25 bg-white/10 px-4 py-2"
                 style={({ pressed }) => ({
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.backgroundSelected,
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
                   opacity: pressed ? 0.9 : 1,
                 })}
               >
                 <Text
-                  style={{ fontFamily: "JetBrainsMono" }}
-                  className="text-white text-xs"
+                  style={{
+                    fontFamily: "JetBrainsMono",
+                    color: colors.textSecondary,
+                    fontSize: 12,
+                  }}
                 >
                   Cancel
                 </Text>
@@ -861,14 +1022,26 @@ export default function Locations() {
 
               <Pressable
                 onPress={setCount}
-                className="rounded-xl border border-white/25 bg-emerald-500/25 px-4 py-2"
                 style={({ pressed }) => ({
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: isDark
+                    ? "rgba(167,243,208,0.35)"
+                    : "rgba(16,185,129,0.4)",
+                  backgroundColor: isDark
+                    ? "rgba(52,211,153,0.2)"
+                    : "rgba(16,185,129,0.1)",
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
                   opacity: pressed ? 0.9 : 1,
                 })}
               >
                 <Text
-                  style={{ fontFamily: "JetBrainsMono" }}
-                  className="text-emerald-100 text-xs"
+                  style={{
+                    fontFamily: "JetBrainsMono",
+                    color: isDark ? "#a7f3d0" : "#065f46",
+                    fontSize: 12,
+                  }}
                 >
                   Set Count
                 </Text>

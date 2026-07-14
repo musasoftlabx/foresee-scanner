@@ -6,10 +6,12 @@ import {
   ThemeProvider,
 } from "expo-router";
 import "@/global.css";
-import { useColorScheme } from "react-native";
+import { Appearance, useColorScheme } from "react-native";
 //import { HeroUINativeProvider } from "heroui-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as Device from "expo-device";
+import { useThemeStore } from "@/store/theme";
+import { useAuthStore } from "@/store/auth";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
 import AppTabs from "@/components/app-tabs";
@@ -22,16 +24,26 @@ import { ENDPOINT } from "@/store/default";
 
 const queryClient = new QueryClient();
 
-if (__DEV__) {
-  Reactotron.configure({ name: "Foresee Scanner" }).useReactNative().connect();
-}
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const { preference } = useThemeStore();
+  const { isLoggedIn, user } = useAuthStore();
+  const role = user?.role ?? "";
 
-  const isLoggedIn = false;
+  useEffect(() => {
+    if (__DEV__)
+      Reactotron.configure({ name: "Foresee Scanner" })
+        .useReactNative()
+        .connect();
+  }, []);
 
-  const role: string = "Scanner_"; // Replace with actual role logic
+  useEffect(() => {
+    if (preference === "system") {
+      Appearance.setColorScheme("unspecified");
+    } else {
+      Appearance.setColorScheme(preference);
+    }
+  }, [preference]);
 
   // const [loaded, error] = useFonts({
   //   JetBrainsMono: require("../../assets/fonts/JetBrainsMono-Regular.ttf"),
@@ -64,18 +76,19 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <AnimatedSplashOverlay />
       <QueryClientProvider client={queryClient}>
         {/* <HeroUINativeProvider> */}
         <Stack
-          // initialRouteName={
-          //   role === "Scanner" && Device.brand === "EA500"
-          //     ? "scan-location"
-          //     : role === "Scanner" && Device.brand !== "EA500"
-          //       ? "scan-location-with-camera"
-          //       : "(tabs)"
-          //   //:"locations"
-          //   //:"location"
-          // }
+          initialRouteName={
+            isLoggedIn && role === "Scanner" && Device.brand === "EA500"
+              ? "scan-location"
+              : isLoggedIn && role === "Scanner" && Device.brand !== "EA500"
+                ? "scan-location-with-camera"
+                : "(tabs)"
+            //:"locations"
+            //:"location"
+          }
           screenOptions={{
             headerShown: false,
             headerStyle: { backgroundColor: "#f4511e" },
@@ -83,6 +96,10 @@ export default function RootLayout() {
             headerTitleStyle: { fontWeight: "bold" },
           }}
         >
+          <Stack.Protected guard={!isLoggedIn}>
+            <Stack.Screen name="(auth)" />
+          </Stack.Protected>
+
           <Stack.Protected guard={isLoggedIn}>
             <Stack.Screen name="audits" options={{ title: "Audits" }} />
             <Stack.Screen name="locations" options={{ title: "Locations" }} />
@@ -103,10 +120,6 @@ export default function RootLayout() {
               name="scan-product-with-camera"
               options={{ title: "ScanProductWithCamera" }}
             />
-          </Stack.Protected>
-
-          <Stack.Protected guard={!isLoggedIn}>
-            <Stack.Screen name="(auth)" />
           </Stack.Protected>
         </Stack>
         {/* </HeroUINativeProvider> */}

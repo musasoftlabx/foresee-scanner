@@ -1,10 +1,23 @@
 import { Text, View } from "react-native";
+import { useTheme } from "@/hooks/use-theme";
 
 export default function ScanProduct() {
+  const { colors } = useTheme();
   return (
-    <View className="flex flex-1 justify-center align-middle p-4">
-      <Text className="font-bold text-2xl">Scan Product Screen</Text>
-      <Text className="text-base text-gray-600 mt-3">
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        padding: 16,
+        backgroundColor: colors.background,
+      }}
+    >
+      <Text style={{ fontWeight: "700", fontSize: 24, color: colors.text }}>
+        Scan Product Screen
+      </Text>
+      <Text
+        style={{ fontSize: 16, color: colors.textSecondary, marginTop: 12 }}
+      >
         This is a simple scan product page boilerplate.
       </Text>
     </View>

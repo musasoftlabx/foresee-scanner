@@ -11,91 +11,93 @@ import {
   Alert,
   StyleSheet,
   Dimensions,
+  Image,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useRouter } from "expo-router";
+import { useTheme } from "@/hooks/use-theme";
+import { useMutation } from "@tanstack/react-query";
+import axios, { AxiosError } from "axios";
+import { useAuthStore } from "@/store/auth";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Buffer } from "buffer";
 
 const { width } = Dimensions.get("window");
 
-interface LoginCredentials {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-}
+const loginSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .min(6, "Password must be at least 6 characters"),
+});
+
+type LoginCredentials = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
-  const [credentials, setCredentials] = useState<LoginCredentials>({
-    email: "",
-    password: "",
-    rememberMe: false,
-  });
+  const { colors, isDark } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  const handleEmailChange = (text: string) => {
-    setCredentials({ ...credentials, email: text });
-  };
+  const router = useRouter();
+  const { login } = useAuthStore();
 
-  const handlePasswordChange = (text: string) => {
-    setCredentials({ ...credentials, password: text });
-  };
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid, isSubmitting, dirtyFields: dirty },
+  } = useForm<LoginCredentials>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+  });
 
-  const handleRememberMe = () => {
-    setCredentials({ ...credentials, rememberMe: !credentials.rememberMe });
-  };
+  const { mutate: loginMutation, isPending } = useMutation({
+    mutationFn: async (creds: LoginCredentials) => {
+      const response = await axios.post("/login", creds);
+      return response.data;
+    },
+  });
 
-  const handleLogin = async () => {
-    if (!credentials.email || !credentials.password) {
-      Alert.alert("Validation Error", "Please fill in all fields");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Add your authentication logic here
-      console.log("Login attempt:", credentials);
-      Alert.alert("Success", `Logged in as ${credentials.email}`);
-      // Navigate to home screen
-      // navigation.navigate('Home');
-    } catch (error) {
-      Alert.alert(
-        "Login Failed",
-        "Please check your credentials and try again",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFacebookLogin = () => {
-    console.log("Facebook login");
-    Alert.alert(
-      "Facebook Login",
-      "Facebook login functionality to be implemented",
-    );
-  };
-
-  const handleForgotPassword = () => {
-    Alert.alert(
-      "Forgot Password",
-      "Password reset functionality to be implemented",
-    );
-  };
-
-  const handleSignUp = () => {
-    // Navigate to sign up screen
-    console.log("Navigate to sign up");
-  };
+  // Theme-aware gradient colors
+  const gradientColors: [string, string, string] = isDark
+    ? ["#2d1b69", "#1e1b4b", "#1e1b4b"]
+    : ["#faf5ff", "#f3e8ff", "#ede9fe"];
 
   return (
     <LinearGradient
-      colors={["#0b1220", "#10233f", "#0f3e4f"]}
+      colors={gradientColors}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}
     >
-      <View style={styles.bgOrbOne} />
-      <View style={styles.bgOrbTwo} />
+      <View
+        style={[
+          styles.bgOrbOne,
+          {
+            backgroundColor: isDark
+              ? "rgba(196,181,253,0.08)"
+              : "rgba(147,51,234,0.06)",
+          },
+        ]}
+      />
+      <View
+        style={[
+          styles.bgOrbTwo,
+          {
+            backgroundColor: isDark
+              ? "rgba(216,180,254,0.06)"
+              : "rgba(147,51,234,0.04)",
+          },
+        ]}
+      />
+
+      {/* Theme toggle — top-right corner */}
+      <View style={styles.themeToggleWrapper}>
+        <ThemeToggle size={15} />
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -106,136 +108,269 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.headerSection}>
-            <View style={styles.logoBadge}>
-              <Ionicons name="scan" size={24} color="#8be9ff" />
+            <View
+              style={[
+                styles.logoBadge,
+                {
+                  borderColor: colors.border,
+                  backgroundColor: `${colors.accent}15`,
+                },
+              ]}
+            >
+              <Image
+                source={require("@/assets/images/foresee-logo.png")}
+                style={{ width: 32, height: 32 }}
+                resizeMode="contain"
+              />
             </View>
-            <Text style={styles.mainTitle}>Foresee Scanner</Text>
-            <Text style={styles.mainSubtitle}>
+            <Text
+              className="text-4xl font-bold tracking-wide"
+              style={{
+                fontFamily: "JetBrainsMono-Regular",
+                color: colors.text,
+              }}
+            >
+              Foresee Scanner
+            </Text>
+            <Text
+              style={[
+                styles.mainSubtitle,
+                {
+                  color: colors.textSecondary,
+                  fontFamily: "JetBrainsMono-Regular",
+                },
+              ]}
+            >
               Field Inventory Intelligence
             </Text>
           </View>
 
-          <View style={styles.card}>
-            <Text style={styles.welcomeEyebrow}>Welcome Back</Text>
-            <Text style={styles.welcomeTitle}>Sign In</Text>
-            <Text style={styles.welcomeSubtitle}>
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.backgroundElement,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.welcomeEyebrow,
+                { color: colors.accent, fontFamily: "JetBrainsMono-Regular" },
+              ]}
+            >
+              Welcome Back
+            </Text>
+            <Text
+              style={[
+                styles.welcomeTitle,
+                { color: colors.text, fontFamily: "JetBrainsMono-Regular" },
+              ]}
+            >
+              Sign In
+            </Text>
+            <Text
+              style={[
+                styles.welcomeSubtitle,
+                {
+                  color: colors.textSecondary,
+                  fontFamily: "JetBrainsMono-Regular",
+                },
+              ]}
+            >
               Access your store audits, scans, and reconciliation workflow.
             </Text>
 
             <View style={styles.formSection}>
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>EMAIL ADDRESS</Text>
-                <View style={styles.inputShell}>
-                  <Ionicons name="mail-outline" size={18} color="#9ac7d3" />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="name@company.com"
-                    placeholderTextColor="#81a0ab"
-                    value={credentials.email}
-                    onChangeText={handleEmailChange}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    editable={!loading}
-                  />
-                </View>
+                <Text
+                  style={[
+                    styles.label,
+                    {
+                      color: colors.accent,
+                      fontFamily: "JetBrainsMono-Regular",
+                    },
+                  ]}
+                >
+                  EMAIL ADDRESS
+                </Text>
+                <Controller
+                  control={control}
+                  name="email"
+                  render={({ field: { onChange, value } }) => (
+                    <View>
+                      <View
+                        style={[
+                          styles.inputShell,
+                          {
+                            borderColor: errors.email
+                              ? "#ef4444"
+                              : colors.border,
+                            backgroundColor: colors.background,
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name="mail-outline"
+                          size={18}
+                          color={colors.accent}
+                        />
+                        <TextInput
+                          style={[
+                            styles.input,
+                            {
+                              color: colors.text,
+                              fontFamily: "JetBrainsMono-Regular",
+                            },
+                          ]}
+                          placeholder="name@company.com"
+                          placeholderTextColor={colors.textSecondary}
+                          value={value}
+                          onChangeText={onChange}
+                          keyboardType="email-address"
+                          autoCapitalize="none"
+                          editable={!isPending}
+                        />
+                      </View>
+                      {errors.email && (
+                        <Text
+                          style={[
+                            styles.errorText,
+                            { fontFamily: "JetBrainsMono-Regular" },
+                          ]}
+                        >
+                          {errors.email.message}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                />
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>PASSWORD</Text>
-                <View style={styles.passwordContainer}>
-                  <Ionicons
-                    name="lock-closed-outline"
-                    size={18}
-                    color="#9ac7d3"
-                    style={styles.passwordLeadingIcon}
-                  />
-                  <TextInput
-                    style={styles.passwordInput}
-                    placeholder="••••••••"
-                    placeholderTextColor="#81a0ab"
-                    value={credentials.password}
-                    onChangeText={handlePasswordChange}
-                    secureTextEntry={!showPassword}
-                    editable={!loading}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={styles.eyeIcon}
-                    disabled={loading}
-                  >
-                    <Ionicons
-                      name={showPassword ? "eye-off" : "eye"}
-                      size={20}
-                      color="#9ac7d3"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={styles.bottomActions}>
-                <TouchableOpacity
-                  style={styles.checkboxContainer}
-                  onPress={handleRememberMe}
-                  disabled={loading}
+                <Text
+                  style={[
+                    styles.label,
+                    {
+                      color: colors.accent,
+                      fontFamily: "JetBrainsMono-Regular",
+                    },
+                  ]}
                 >
-                  <View
-                    style={[
-                      styles.checkbox,
-                      credentials.rememberMe && styles.checkboxChecked,
-                    ]}
-                  >
-                    {credentials.rememberMe && (
-                      <Ionicons name="checkmark" size={14} color="#12313a" />
-                    )}
-                  </View>
-                  <Text style={styles.checkboxLabel}>Remember Me</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={handleForgotPassword}
-                  disabled={loading}
-                >
-                  <Text style={styles.forgotPassword}>Forgot Password?</Text>
-                </TouchableOpacity>
+                  PASSWORD
+                </Text>
+                <Controller
+                  control={control}
+                  name="password"
+                  render={({ field: { onChange, value } }) => (
+                    <View>
+                      <View
+                        style={[
+                          styles.passwordContainer,
+                          {
+                            borderColor: errors.password
+                              ? "#ef4444"
+                              : colors.border,
+                            backgroundColor: colors.background,
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name="lock-closed-outline"
+                          size={18}
+                          color={colors.accent}
+                          style={styles.passwordLeadingIcon}
+                        />
+                        <TextInput
+                          style={[
+                            styles.passwordInput,
+                            {
+                              color: colors.text,
+                              fontFamily: "JetBrainsMono-Regular",
+                            },
+                          ]}
+                          placeholder="••••••••"
+                          placeholderTextColor={colors.textSecondary}
+                          value={value}
+                          onChangeText={onChange}
+                          secureTextEntry={!showPassword}
+                          editable={!isPending}
+                        />
+                        <TouchableOpacity
+                          onPress={() => setShowPassword(!showPassword)}
+                          style={styles.eyeIcon}
+                          disabled={isPending}
+                        >
+                          <Ionicons
+                            name={showPassword ? "eye-off" : "eye"}
+                            size={20}
+                            color={colors.accent}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                      {errors.password && (
+                        <Text
+                          style={[
+                            styles.errorText,
+                            { fontFamily: "JetBrainsMono-Regular" },
+                          ]}
+                        >
+                          {errors.password.message}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                />
               </View>
 
               <TouchableOpacity
                 style={[
                   styles.loginButton,
-                  loading && styles.loginButtonDisabled,
+                  { backgroundColor: colors.accent },
+                  (isPending || !isValid) && styles.loginButtonDisabled,
                 ]}
-                onPress={handleLogin}
-                disabled={loading}
+                onPress={handleSubmit((formdata: LoginCredentials) =>
+                  loginMutation(
+                    {
+                      ...formdata,
+                      password: Buffer.from(formdata.password).toString(
+                        "base64",
+                      ),
+                    },
+                    {
+                      onSuccess: (data) => {
+                        login(data);
+                        router.replace("/(tabs)/stores");
+                      },
+                      onError: (error: unknown) =>
+                        Alert.alert(
+                          "Login Failed",
+                          error instanceof axios.AxiosError
+                            ? error.response?.data?.message || error.message
+                            : "Please check your credentials and try again",
+                        ),
+                    },
+                  ),
+                )}
+                disabled={isPending || !isValid}
                 activeOpacity={0.8}
               >
-                {loading ? (
-                  <ActivityIndicator color="#082029" size="small" />
+                {isPending ? (
+                  <ActivityIndicator color={colors.background} size="small" />
                 ) : (
-                  <Text style={styles.loginButtonText}>Sign In</Text>
+                  <Text
+                    style={[
+                      styles.loginButtonText,
+                      {
+                        color: colors.background,
+                        fontFamily: "JetBrainsMono-Regular",
+                      },
+                    ]}
+                  >
+                    Sign In
+                  </Text>
                 )}
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.dividerContainer}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>Or continue with</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            <TouchableOpacity
-              style={styles.facebookButton}
-              onPress={handleFacebookLogin}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="logo-facebook" size={20} color="white" />
-              <Text style={styles.facebookButtonText}>Facebook</Text>
-            </TouchableOpacity>
-
-            <View style={styles.signUpContainer}>
-              <Text style={styles.signUpText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={handleSignUp} disabled={loading}>
-                <Text style={styles.signUpLink}>Sign Up</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -249,12 +384,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  themeToggleWrapper: {
+    position: "absolute",
+    top: 54,
+    right: 20,
+    zIndex: 10,
+  },
   bgOrbOne: {
     position: "absolute",
     width: width * 0.72,
     height: width * 0.72,
     borderRadius: width,
-    backgroundColor: "rgba(88, 203, 229, 0.15)",
     top: -width * 0.25,
     right: -width * 0.18,
   },
@@ -263,7 +403,6 @@ const styles = StyleSheet.create({
     width: width * 0.8,
     height: width * 0.8,
     borderRadius: width,
-    backgroundColor: "rgba(248, 168, 94, 0.14)",
     bottom: -width * 0.32,
     left: -width * 0.22,
   },
@@ -284,37 +423,26 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: "rgba(255,255,255,0.1)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.25)",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 14,
   },
-  mainTitle: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "white",
-    letterSpacing: 0.4,
-  },
   mainSubtitle: {
     marginTop: 6,
     fontSize: 13,
-    color: "rgba(227, 247, 255, 0.86)",
     letterSpacing: 0.4,
   },
   card: {
-    backgroundColor: "rgba(7, 23, 35, 0.72)",
     borderRadius: 26,
     padding: 24,
     borderWidth: 1,
-    borderColor: "rgba(164, 224, 239, 0.28)",
-    shadowColor: "#0a1118",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 12,
     },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.15,
     shadowRadius: 18,
     elevation: 14,
   },
@@ -322,19 +450,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 1.2,
     textTransform: "uppercase",
-    color: "#8be9ff",
     marginBottom: 8,
   },
   welcomeTitle: {
     fontSize: 30,
     fontWeight: "700",
-    color: "#ffffff",
     marginBottom: 8,
     letterSpacing: 0.4,
   },
   welcomeSubtitle: {
     fontSize: 13,
-    color: "rgba(220, 239, 247, 0.78)",
     marginBottom: 22,
     lineHeight: 20,
   },
@@ -347,7 +472,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#9ac7d3",
     marginBottom: 8,
     letterSpacing: 0.5,
     textTransform: "uppercase",
@@ -356,25 +480,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(158, 210, 225, 0.42)",
     borderRadius: 12,
     paddingHorizontal: 12,
-    backgroundColor: "rgba(6, 15, 24, 0.45)",
   },
   input: {
     flex: 1,
     paddingHorizontal: 10,
     paddingVertical: 12,
     fontSize: 16,
-    color: "#e9f8ff",
   },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(158, 210, 225, 0.42)",
     borderRadius: 12,
-    backgroundColor: "rgba(6, 15, 24, 0.45)",
   },
   passwordLeadingIcon: {
     marginLeft: 12,
@@ -384,54 +503,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 12,
     fontSize: 16,
-    color: "#e9f8ff",
   },
   eyeIcon: {
     paddingRight: 16,
     padding: 8,
   },
-  bottomActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  checkboxContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  checkbox: {
-    width: 18,
-    height: 18,
-    borderWidth: 1.5,
-    borderColor: "rgba(158, 210, 225, 0.55)",
-    borderRadius: 4,
-    marginRight: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(6, 15, 24, 0.45)",
-  },
-  checkboxChecked: {
-    backgroundColor: "#8be9ff",
-    borderColor: "#8be9ff",
-  },
-  checkboxLabel: {
-    fontSize: 14,
-    color: "#d5eff7",
-  },
-  forgotPassword: {
-    fontSize: 14,
-    color: "#8be9ff",
-    fontWeight: "500",
-  },
   loginButton: {
-    backgroundColor: "#8be9ff",
     paddingVertical: 14,
     borderRadius: 14,
+    marginTop: 12,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#8be9ff",
     shadowOffset: {
       width: 0,
       height: 8,
@@ -446,62 +528,12 @@ const styles = StyleSheet.create({
   loginButtonText: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#082029",
     letterSpacing: 0.5,
   },
-  dividerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "rgba(162, 207, 220, 0.28)",
-  },
-  dividerText: {
-    paddingHorizontal: 12,
+  errorText: {
     fontSize: 12,
-    color: "#98bfca",
-  },
-  facebookButton: {
-    flexDirection: "row",
-    backgroundColor: "#1b5ea9",
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    borderWidth: 1,
-    borderColor: "rgba(138, 187, 255, 0.45)",
-    shadowColor: "#1b5ea9",
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  facebookButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "white",
-    letterSpacing: 0.5,
-  },
-  signUpContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 20,
-  },
-  signUpText: {
-    fontSize: 14,
-    color: "#c7e5ee",
-  },
-  signUpLink: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#8be9ff",
+    color: "#ef4444",
+    marginTop: 6,
+    paddingHorizontal: 4,
   },
 });

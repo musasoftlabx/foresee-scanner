@@ -57,3 +57,11 @@ Join our community of developers creating universal apps.
 
 > brew install --cask android-platform-tools
 > brew install --cask temurin
+
+## If you migrate into a new project, use this to set up git
+
+> git remote add origin https://github.com/musasoftlabx/foresee-scanner.git
+> git add .
+> git commit -m ""
+> git push
+> git push --set-upstream origin main -f

@@ -11,6 +11,7 @@ import { StatusBar } from "expo-status-bar";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useTheme } from "@/hooks/use-theme";
 
 type AuditRouteParams = {
   id?: string;
@@ -40,33 +41,26 @@ function formatAuditDate(value: string) {
   });
 }
 
-function getCoveragePalette(coverage: number) {
+function getCoveragePalette(coverage: number, isDark: boolean) {
   if (coverage < 40) {
     return {
-      badgeWrap: "bg-rose-400/20 border-rose-300/35",
-      badgeText: "text-rose-200",
-      cardBorder: "border-rose-300/35",
-      actionText: "text-rose-200",
-      actionIcon: "#fecdd3",
+      cardBorderColor: isDark
+        ? "rgba(252,165,165,0.35)"
+        : "rgba(239,68,68,0.3)",
+      actionColor: isDark ? "#fecdd3" : "#dc2626",
     };
   }
-
   if (coverage < 75) {
     return {
-      badgeWrap: "bg-amber-400/20 border-amber-300/35",
-      badgeText: "text-amber-100",
-      cardBorder: "border-amber-300/35",
-      actionText: "text-amber-100",
-      actionIcon: "#fde68a",
+      cardBorderColor: isDark
+        ? "rgba(253,230,138,0.35)"
+        : "rgba(245,158,11,0.3)",
+      actionColor: isDark ? "#fde68a" : "#d97706",
     };
   }
-
   return {
-    badgeWrap: "bg-emerald-400/20 border-emerald-300/35",
-    badgeText: "text-emerald-200",
-    cardBorder: "border-emerald-300/35",
-    actionText: "text-emerald-200",
-    actionIcon: "#a7f3d0",
+    cardBorderColor: isDark ? "rgba(167,243,208,0.35)" : "rgba(16,185,129,0.3)",
+    actionColor: isDark ? "#a7f3d0" : "#059669",
   };
 }
 
@@ -75,6 +69,7 @@ export default function Audits() {
   const { id, code, name } = useLocalSearchParams<AuditRouteParams>();
   const navigation = useNavigation();
   const router = useRouter();
+  const { colors, isDark } = useTheme();
 
   // ? Validate
   const storeId = Number(id);
@@ -96,18 +91,33 @@ export default function Audits() {
     navigation.setOptions({
       headerShown: true,
       headerTitle: `Audits under ${name}`,
-      headerStyle: { backgroundColor: "#59168b", fontFamily: "JetBrainsMono" },
+      headerStyle: {
+        backgroundColor: colors.headerBackground,
+        fontFamily: "JetBrainsMono",
+      },
+      headerTintColor: colors.headerTint,
     });
-  }, [navigation]);
+  }, [navigation, name, colors]);
 
   if (isPending) {
     return (
-      <View className="flex flex-1 bg-purple-100 dark:bg-purple-900 items-center justify-center">
-        <StatusBar style="light" animated />
-        <ActivityIndicator size="large" color="white" />
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <StatusBar style={isDark ? "light" : "dark"} animated />
+        <ActivityIndicator size="large" color={colors.accent} />
         <Text
-          style={{ fontFamily: "JetBrainsMono" }}
-          className="text-white/80 text-sm mt-3"
+          style={{
+            fontFamily: "JetBrainsMono",
+            color: colors.textSecondary,
+            fontSize: 13,
+            marginTop: 12,
+          }}
         >
           Loading audits...
         </Text>
@@ -117,19 +127,41 @@ export default function Audits() {
 
   if (isError) {
     return (
-      <View className="flex flex-1 bg-purple-100 dark:bg-purple-900 items-center justify-center px-6">
-        <StatusBar style="light" animated />
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: 24,
+        }}
+      >
+        <StatusBar style={isDark ? "light" : "dark"} animated />
         <Text
-          style={{ fontFamily: "JetBrainsMono" }}
-          className="text-white text-center text-sm"
+          style={{
+            fontFamily: "JetBrainsMono",
+            color: colors.text,
+            textAlign: "center",
+            fontSize: 13,
+          }}
         >
           Failed to load audits. {error instanceof Error ? error.message : ""}
         </Text>
         <Pressable
           onPress={refreshStores}
-          className="mt-4 rounded-lg bg-white/20 px-4 py-2"
+          style={{
+            marginTop: 16,
+            borderRadius: 8,
+            backgroundColor: colors.backgroundElement,
+            borderWidth: 1,
+            borderColor: colors.border,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+          }}
         >
-          <Text style={{ fontFamily: "JetBrainsMono" }} className="text-white">
+          <Text
+            style={{ fontFamily: "JetBrainsMono", color: colors.textSecondary }}
+          >
             Retry
           </Text>
         </Pressable>
@@ -139,11 +171,23 @@ export default function Audits() {
 
   if (!hasValidStoreId) {
     return (
-      <View className="flex flex-1 bg-purple-100 dark:bg-purple-900 items-center justify-center px-6">
-        <StatusBar style="light" animated />
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: 24,
+        }}
+      >
+        <StatusBar style={isDark ? "light" : "dark"} animated />
         <Text
-          style={{ fontFamily: "JetBrainsMono" }}
-          className="text-white text-center text-sm"
+          style={{
+            fontFamily: "JetBrainsMono",
+            color: colors.text,
+            textAlign: "center",
+            fontSize: 13,
+          }}
         >
           Missing store params from route.
         </Text>
@@ -152,8 +196,15 @@ export default function Audits() {
   }
 
   return (
-    <View className="flex flex-1 bg-purple-100 dark:bg-purple-900 px-4 pt-6">
-      <StatusBar style="light" animated />
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+        paddingHorizontal: 16,
+        paddingTop: 24,
+      }}
+    >
+      <StatusBar style={isDark ? "light" : "dark"} animated />
 
       <FlatList
         data={data}
@@ -167,12 +218,17 @@ export default function Audits() {
             item.locations > 0
               ? Math.min(100, Math.round((item.scans / item.locations) * 100))
               : 0;
-          const palette = getCoveragePalette(scanCoverage);
+          const palette = getCoveragePalette(scanCoverage, isDark);
 
           return (
             <Pressable
-              className={`flex flex-1 rounded-2xl border bg-white/12 p-3.5 ${palette.cardBorder}`}
               style={({ pressed }) => ({
+                flex: 1,
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: palette.cardBorderColor,
+                backgroundColor: colors.backgroundElement,
+                padding: 14,
                 opacity: pressed ? 0.92 : 1,
                 transform: [{ scale: pressed ? 0.985 : 1 }],
               })}
@@ -183,107 +239,197 @@ export default function Audits() {
                 })
               }
             >
-              <View className="flex-row items-start justify-between">
-                <View className="flex-1 pr-2">
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                }}
+              >
+                <View style={{ flex: 1, paddingRight: 8 }}>
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white text-base font-bold"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.text,
+                      fontSize: 15,
+                      fontWeight: "700",
+                    }}
                     numberOfLines={1}
                   >
                     {item.code}
                   </Text>
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white/75 text-[11px] mt-1"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.textSecondary,
+                      fontSize: 11,
+                      marginTop: 4,
+                    }}
                     numberOfLines={1}
                   >
                     {formatAuditDate(item.date)}
                   </Text>
                 </View>
 
-                <View className="mt-1 flex-row items-center justify-end">
+                <View
+                  style={{
+                    marginTop: 4,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "flex-end",
+                  }}
+                >
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className={`text-[16px] mr-1 ${palette.actionText}`}
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      fontSize: 14,
+                      marginRight: 2,
+                      color: palette.actionColor,
+                    }}
                   >
                     Open
                   </Text>
                   <MaterialIcons
                     name="chevron-right"
                     size={16}
-                    color={palette.actionIcon}
+                    color={palette.actionColor}
                   />
                 </View>
-
-                {/* <View
-                  className={`rounded-full border px-2 py-1 ${palette.badgeWrap}`}
-                >
-                  <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className={`text-[10px] ${palette.badgeText}`}
-                  >
-                    {scanCoverage}%
-                  </Text>
-                </View> */}
               </View>
 
-              <View className="mt-3 rounded-lg border border-white/20 bg-black/15 px-2.5 py-2">
-                <View className="flex-row items-center justify-between">
+              <View
+                style={{
+                  marginTop: 12,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: isDark
+                    ? "rgba(0,0,0,0.2)"
+                    : colors.backgroundSelected,
+                  paddingHorizontal: 10,
+                  paddingVertical: 8,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white/80 text-[10px]"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.textSecondary,
+                      fontSize: 10,
+                    }}
                   >
                     Barcode Mode
                   </Text>
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white text-[10px]"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.text,
+                      fontSize: 10,
+                    }}
                   >
                     {item.barcode.mode}
                   </Text>
                 </View>
-                <View className="h-px bg-white/10 my-2" />
-                <View className="flex-row items-center justify-between">
+                <View
+                  style={{
+                    height: 1,
+                    backgroundColor: colors.border,
+                    marginVertical: 8,
+                  }}
+                />
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white/80 text-[10px]"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.textSecondary,
+                      fontSize: 10,
+                    }}
                   >
                     Characters
                   </Text>
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white text-[10px]"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.text,
+                      fontSize: 10,
+                    }}
                   >
                     {item.barcode.characters}
                   </Text>
                 </View>
               </View>
 
-              <View className="mt-3 flex-row gap-2">
-                <View className="flex-1 rounded-lg bg-white/12 border border-white/20 px-2 py-2">
+              <View style={{ marginTop: 12, flexDirection: "row", gap: 8 }}>
+                <View
+                  style={{
+                    flex: 1,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    backgroundColor: colors.backgroundSelected,
+                    paddingHorizontal: 8,
+                    paddingVertical: 8,
+                  }}
+                >
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white/75 text-[10px]"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.textSecondary,
+                      fontSize: 10,
+                    }}
                   >
                     Locations
                   </Text>
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white text-sm mt-1"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.text,
+                      fontSize: 14,
+                      marginTop: 4,
+                    }}
                   >
                     {item.locations}
                   </Text>
                 </View>
-                <View className="flex-1 rounded-lg bg-white/12 border border-white/20 px-2 py-2">
+                <View
+                  style={{
+                    flex: 1,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    backgroundColor: colors.backgroundSelected,
+                    paddingHorizontal: 8,
+                    paddingVertical: 8,
+                  }}
+                >
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white/75 text-[10px]"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.textSecondary,
+                      fontSize: 10,
+                    }}
                   >
                     Scans
                   </Text>
                   <Text
-                    style={{ fontFamily: "JetBrainsMono" }}
-                    className="text-white text-sm mt-1"
+                    style={{
+                      fontFamily: "JetBrainsMono",
+                      color: colors.text,
+                      fontSize: 14,
+                      marginTop: 4,
+                    }}
                   >
                     {item.scans}
                   </Text>
@@ -294,8 +440,12 @@ export default function Audits() {
         }}
         ListEmptyComponent={
           <Text
-            style={{ fontFamily: "JetBrainsMono" }}
-            className="text-white/80 text-center mt-8"
+            style={{
+              fontFamily: "JetBrainsMono",
+              color: colors.textSecondary,
+              textAlign: "center",
+              marginTop: 32,
+            }}
           >
             No audits found.
           </Text>

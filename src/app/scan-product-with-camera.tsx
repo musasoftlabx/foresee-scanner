@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
 import { Button, Dimensions, Text, Vibration, View } from "react-native";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
+import { useTheme } from "@/hooks/use-theme";
 
 export default function ScanProductWithCamera() {
   const [permission, requestPermission] = useCameraPermissions();
+  const { colors } = useTheme();
 
   const [scanned, setScanned] = useState(false);
   const [scannedData, setScannedData] = useState("");
@@ -11,16 +13,26 @@ export default function ScanProductWithCamera() {
   const lastScannedTime = useRef(0);
 
   if (!permission) {
-    // Camera permissions are still loading.
-    return <View />;
+    return <View style={{ flex: 1, backgroundColor: colors.background }} />;
   }
 
   if (!permission.granted) {
-    // Camera permissions are not granted yet.
     return (
-      <View>
-        <Text>We need your permission to show the camera</Text>
-        <Button onPress={requestPermission} title="grant permission" />
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colors.background,
+          padding: 24,
+        }}
+      >
+        <Text
+          style={{ color: colors.text, textAlign: "center", marginBottom: 16 }}
+        >
+          We need your permission to show the camera
+        </Text>
+        <Button onPress={requestPermission} title="Grant Permission" />
       </View>
     );
   }

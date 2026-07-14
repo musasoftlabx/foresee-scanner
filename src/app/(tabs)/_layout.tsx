@@ -6,16 +6,23 @@ import {
   DrawerItemList,
   type DrawerContentComponentProps,
 } from "expo-router/drawer";
+import { useTheme } from "@/hooks/use-theme";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useNavigation, useRouter } from "expo-router";
 
 const ORGANIZATIONS = ["MusaSoft Labs", "Foresee Retail", "Field Ops East"];
 
 function AppDrawerContent(props: DrawerContentComponentProps) {
+  const { colors, isDark } = useTheme();
+  const navigation = useNavigation();
+  const router = useRouter();
+
   return (
     <DrawerContentScrollView
       {...props}
       contentContainerStyle={{
         flexGrow: 1,
-        backgroundColor: "#3f1d68",
+        backgroundColor: colors.drawerBackground,
         paddingTop: 0,
       }}
     >
@@ -27,44 +34,71 @@ function AppDrawerContent(props: DrawerContentComponentProps) {
             width: 58,
             height: 58,
             borderRadius: 29,
-            backgroundColor: "rgba(255,255,255,0.18)",
+            backgroundColor: isDark
+              ? "rgba(196,181,253,0.15)"
+              : "rgba(147,51,234,0.12)",
             borderWidth: 1,
-            borderColor: "rgba(255,255,255,0.35)",
+            borderColor: isDark
+              ? "rgba(196,181,253,0.3)"
+              : "rgba(147,51,234,0.25)",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <MaterialIcons name="person" size={28} color="#ffffff" />
+          <MaterialIcons
+            name="person"
+            size={28}
+            color={isDark ? "#ddd6fe" : "#6d28d9"}
+          />
         </View>
         <Text
-          style={{ fontFamily: "JetBrainsMono", marginTop: 12 }}
-          className="text-white text-base"
+          style={{
+            fontFamily: "JetBrainsMono",
+            marginTop: 12,
+            color: colors.text,
+            fontSize: 15,
+          }}
         >
           John Scanner
         </Text>
       </View>
 
-      <View
-        style={{ borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.14)" }}
-      >
+      <View style={{ borderTopWidth: 1, borderTopColor: colors.border }}>
         <DrawerItemList {...props} />
       </View>
 
       <View style={{ paddingHorizontal: 16, marginTop: 18 }}>
         <Text
-          style={{ fontFamily: "JetBrainsMono" }}
-          className="text-white/70 text-xs mb-2"
+          style={{
+            fontFamily: "JetBrainsMono",
+            color: colors.textSecondary,
+            fontSize: 11,
+            marginBottom: 8,
+          }}
         >
           Organizations
         </Text>
         {ORGANIZATIONS.map((organization) => (
           <View
             key={organization}
-            className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 mb-2"
+            style={{
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: colors.border,
+              backgroundColor: isDark
+                ? "rgba(196,181,253,0.08)"
+                : "rgba(147,51,234,0.06)",
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              marginBottom: 8,
+            }}
           >
             <Text
-              style={{ fontFamily: "JetBrainsMono" }}
-              className="text-white text-xs"
+              style={{
+                fontFamily: "JetBrainsMono",
+                color: colors.text,
+                fontSize: 12,
+              }}
             >
               {organization}
             </Text>
@@ -72,18 +106,58 @@ function AppDrawerContent(props: DrawerContentComponentProps) {
         ))}
       </View>
 
+      {/* Theme toggle */}
+      <View
+        style={{
+          paddingHorizontal: 16,
+          marginTop: 16,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Text
+          style={{
+            fontFamily: "JetBrainsMono",
+            color: colors.textSecondary,
+            fontSize: 11,
+          }}
+        >
+          Appearance
+        </Text>
+        <ThemeToggle size={15} />
+      </View>
+
       <View
         style={{ marginTop: "auto", paddingHorizontal: 16, paddingBottom: 20 }}
       >
         <Pressable
-          onPress={() => Alert.alert("Logout", "You have been logged out.")}
-          className="rounded-xl border border-red-300/35 bg-red-500/20 px-4 py-3"
+          onPress={() => router.replace("/(auth)/login")}
+          //onPress={() => navigation.navigate("/(auth)/login")}
+          style={{
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: "rgba(252,165,165,0.35)",
+            backgroundColor: "rgba(239,68,68,0.15)",
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+          }}
         >
-          <View className="flex-row items-center justify-center">
-            <MaterialIcons name="logout" size={16} color="#fecaca" />
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <MaterialIcons name="logout" size={16} color="#fca5a5" />
             <Text
-              style={{ fontFamily: "JetBrainsMono" }}
-              className="text-red-100 text-xs ml-2"
+              style={{
+                fontFamily: "JetBrainsMono",
+                color: "#fca5a5",
+                fontSize: 12,
+                marginLeft: 8,
+              }}
             >
               Logout
             </Text>
@@ -95,15 +169,17 @@ function AppDrawerContent(props: DrawerContentComponentProps) {
 }
 
 export default function TabLayout() {
+  const { colors } = useTheme();
+
   return (
     <Drawer
       drawerContent={(props) => <AppDrawerContent {...props} />}
       screenOptions={{
-        headerStyle: { backgroundColor: "#59168b" },
-        headerTintColor: "#fff",
-        drawerStyle: { backgroundColor: "#3f1d68" },
-        drawerActiveTintColor: "#ffffff",
-        drawerInactiveTintColor: "rgba(255,255,255,0.78)",
+        headerStyle: { backgroundColor: colors.headerBackground },
+        headerTintColor: colors.headerTint,
+        drawerStyle: { backgroundColor: colors.drawerBackground },
+        drawerActiveTintColor: colors.drawerActiveTint,
+        drawerInactiveTintColor: colors.drawerInactiveTint,
       }}
     >
       <Drawer.Screen

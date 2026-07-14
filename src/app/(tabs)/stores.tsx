@@ -1,7 +1,10 @@
+// * React
+// biome-ignore assist/source/organizeImports: <ignore lint: false positive>
 import { useCallback, useLayoutEffect, useMemo, useState } from "react";
+
+// * React Native
 import {
   ActivityIndicator,
-  Dimensions,
   FlatList,
   Pressable,
   Text,
@@ -9,13 +12,28 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { useNavigation, useRouter } from "expo-router";
+
+// * Expo
 import { StatusBar } from "expo-status-bar";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import axios from "axios";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
+// * Router
+import { useNavigation, useRouter } from "expo-router";
 import { DrawerActions } from "expo-router/react-navigation";
 
+// * Icons
+import Feather from "@expo/vector-icons/build/Feather";
+import MaterialIcons from "@expo/vector-icons/build/MaterialIcons";
+import MaterialCommunityIcons from "@expo/vector-icons/build/MaterialCommunityIcons";
+import Octicons from "@expo/vector-icons/build/Octicons";
+
+// * Libraries
+import { useInfiniteQuery } from "@tanstack/react-query";
+import axios, { AxiosError } from "axios";
+
+// * Hooks
+import { useTheme } from "@/hooks/use-theme";
+
+// * Types
 type Store = {
   id: string;
   code: string;
@@ -23,69 +41,14 @@ type Store = {
   client: string;
   country: string;
 };
-
 type StoresPage = {
   stores: Store[];
   nextOffset?: number;
 };
 
-// function toArrayPayload(payload: unknown): unknown[] {
-//   if (Array.isArray(payload)) {
-//     return payload;
-//   }
-
-//   if (payload && typeof payload === "object") {
-//     const record = payload as Record<string, unknown>;
-//     const candidates = [
-//       record.stores,
-//       record.items,
-//       record.dataset,
-//       record.results,
-//       record.data,
-//       record.rows,
-//     ];
-
-//     for (const candidate of candidates) {
-//       if (Array.isArray(candidate)) {
-//         return candidate;
-//       }
-
-//       if (candidate && typeof candidate === "object") {
-//         const nested = candidate as Record<string, unknown>;
-//         if (Array.isArray(nested.stores)) {
-//           return nested.stores;
-//         }
-//         if (Array.isArray(nested.items)) {
-//           return nested.items;
-//         }
-//       }
-//     }
-//   }
-
-//   return [];
-// }
-
-// function normalizeStore(item: unknown, index: number): Store {
-//   const record = (item ?? {}) as Record<string, unknown>;
-//   const storeCode = String(
-//     record.storeCode ??
-//       record.store_code ??
-//       record.code ??
-//       `STORE-${index + 1}`,
-//   );
-//   const id = String(record.id ?? record._id ?? storeCode);
-
-//   return {
-//     id,
-//     storeCode,
-//     storeName: String(record.storeName ?? record.store_name ?? "Unknown Store"),
-//     client: String(record.client ?? record.clientName ?? "N/A"),
-//     country: String(record.country ?? record.countryName ?? "N/A"),
-//   };
-// }
-
 export default function Stores() {
   // ? Hooks
+  const { colors, isDark } = useTheme();
   const { width, height } = useWindowDimensions();
   const navigation = useNavigation();
   const router = useRouter();
@@ -164,6 +127,11 @@ export default function Stores() {
     [data],
   );
 
+  const handleEndReached = useCallback(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    fetchNextPage();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
   const filteredStores = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -181,14 +149,6 @@ export default function Stores() {
     });
   }, [searchQuery, stores]);
 
-  // const loadMoreStores = useCallback(() => {
-  //   if (!hasNextPage || isFetchingNextPage) {
-  //     return;
-  //   }
-
-  //   fetchNextPage();
-  // }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
   const refresh = useCallback(async () => await refetch(), [refetch]);
 
   useLayoutEffect(() => {
@@ -200,47 +160,33 @@ export default function Stores() {
       headerTitle: () => (
         <View
           style={{
-            width: Math.max(220, width - 24),
-            height: 48,
+            width: Math.max(width - 64, 220),
             flexDirection: "row",
             alignItems: "center",
-            paddingVertical: 4,
-            paddingHorizontal: 10,
+            paddingHorizontal: 20,
             borderWidth: 1,
-            borderColor: "rgba(255, 255, 255, 0.35)",
+            borderColor: "rgba(255,255,255,0.3)",
             borderRadius: 50,
-            backgroundColor: "rgba(0, 0, 0, 0.15)",
+            backgroundColor: "rgba(0,0,0,0.15)",
           }}
         >
-          <Pressable
-            onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-            className="mr-3 px-1"
-          >
-            <MaterialIcons color="white" name="menu" size={24} />
-          </Pressable>
-
-          <MaterialIcons
-            name="search"
-            size={24}
-            color="rgba(255, 255, 255, 1)"
-          />
+          <Octicons name="search" size={20} color={`${colors.headerTint}99`} />
           <TextInput
             allowFontScaling={false}
             autoCapitalize="words"
             autoCorrect={false}
             placeholder="Search store"
-            placeholderTextColor="rgba(255, 255, 255, 0.7)"
+            placeholderTextColor={`${colors.headerTint}99`}
             returnKeyType="search"
-            selectionColor="rgba(255, 255, 255, 0.9)"
+            selectionColor={colors.headerTint}
             value={searchQuery}
             onChangeText={setSearchQuery}
             style={{
-              color: "white",
+              color: colors.headerTint,
               fontFamily: "JetBrainsMono",
               fontSize: 16,
               flex: 1,
               marginLeft: 8,
-              paddingVertical: 2,
             }}
           />
           {searchQuery.length > 0 ? (
@@ -254,28 +200,46 @@ export default function Stores() {
               <MaterialIcons
                 name="close"
                 size={18}
-                color="rgba(255, 255, 255, 0.85)"
+                color={`${colors.headerTint}cc`}
               />
             </Pressable>
           ) : null}
         </View>
       ),
-      headerStyle: { backgroundColor: "#59168b" },
-      headerTintColor: "white",
-      headerLeft: () => null,
+      headerStyle: { backgroundColor: colors.headerBackground },
+      headerTintColor: colors.headerTint,
+      headerLeft: () => (
+        <Pressable
+          onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
+          style={{ marginHorizontal: 15 }}
+        >
+          <Feather color={colors.headerTint} name="sidebar" size={20} />
+        </Pressable>
+      ),
       headerRight: () => null,
       headerTitleContainerStyle: { left: 0, right: 0, alignItems: "center" },
     });
-  }, [navigation, searchQuery, width]);
+  }, [navigation, searchQuery, width, colors]);
 
   if (isPending) {
     return (
-      <View className="flex flex-1 bg-purple-100 dark:bg-purple-900 items-center justify-center">
-        <StatusBar style="light" animated />
-        <ActivityIndicator size="large" color="white" />
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <StatusBar style={isDark ? "light" : "dark"} animated />
+        <ActivityIndicator size="large" color={colors.accent} />
         <Text
-          style={{ fontFamily: "JetBrainsMono" }}
-          className="text-white/80 text-sm mt-3"
+          style={{
+            fontFamily: "JetBrainsMono",
+            color: colors.textSecondary,
+            fontSize: 13,
+            marginTop: 12,
+          }}
         >
           Loading stores...
         </Text>
@@ -285,19 +249,49 @@ export default function Stores() {
 
   if (isError) {
     return (
-      <View className="flex flex-1 bg-purple-100 dark:bg-purple-900 items-center justify-center px-6">
-        <StatusBar style="light" animated />
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: 24,
+        }}
+      >
+        <StatusBar style={isDark ? "light" : "dark"} animated />
+        <MaterialCommunityIcons
+          name="close-network-outline"
+          size={80}
+          color={colors.textSecondary}
+          style={{ opacity: 0.4, marginBottom: 16 }}
+        />
+
         <Text
-          style={{ fontFamily: "JetBrainsMono" }}
-          className="text-white text-center text-sm"
+          style={{
+            fontFamily: "JetBrainsMono",
+            color: colors.text,
+            textAlign: "center",
+            fontSize: 13,
+          }}
         >
-          Failed to load stores. {error instanceof Error ? error.message : ""}
+          Failed to load stores.{" "}
+          {error instanceof AxiosError ? error.message : ""}
         </Text>
         <Pressable
           onPress={refresh}
-          className="mt-4 rounded-lg bg-white/20 px-4 py-2"
+          style={{
+            marginTop: 16,
+            borderRadius: 8,
+            backgroundColor: colors.backgroundElement,
+            borderWidth: 1,
+            borderColor: colors.border,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+          }}
         >
-          <Text style={{ fontFamily: "JetBrainsMono" }} className="text-white">
+          <Text
+            style={{ fontFamily: "JetBrainsMono", color: colors.textSecondary }}
+          >
             Retry
           </Text>
         </Pressable>
@@ -306,67 +300,133 @@ export default function Stores() {
   }
 
   return (
-    <View className="flex flex-1 bg-purple-100 dark:bg-purple-900 px-4 pt-6">
-      <StatusBar style="light" animated />
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} animated />
+
+      <View
+        className="flex-row items-center gap-2 my-4 pb-3 px-4"
+        style={{ borderBottomWidth: 1, borderColor: colors.border }}
+      >
+        <View
+          className="w-10 h-10 rounded-md flex items-center justify-center border"
+          style={{
+            backgroundColor: `${colors.border}`,
+            borderColor: colors.border,
+          }}
+        >
+          <Text
+            className="text-2xl"
+            style={{
+              color: colors.textSecondary,
+              fontFamily: "JetBrainsMono-ExtraBold",
+            }}
+          >
+            M
+          </Text>
+        </View>
+
+        <View>
+          <Text
+            className="text-[13px] tracking-widest"
+            style={{
+              color: colors.textSecondary,
+              fontFamily: "JetBrainsMono-ExtraBold",
+            }}
+          >
+            ORGANIZATION
+          </Text>
+          <Text
+            className="text-xl"
+            style={{ color: colors.text, fontFamily: "JetBrainsMono" }}
+          >
+            Musasoft Labs
+          </Text>
+        </View>
+      </View>
 
       <FlatList
         data={filteredStores}
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={{ gap: 12 }}
-        contentContainerStyle={{ gap: 12, paddingBottom: 16 }}
+        contentContainerStyle={{
+          gap: 12,
+          paddingBottom: 16,
+          paddingHorizontal: 16,
+        }}
         refreshing={isRefetching}
         onRefresh={refresh}
         onEndReachedThreshold={0.4}
-        onEndReached={useCallback(() => {
-          if (!hasNextPage || isFetchingNextPage) return;
-          fetchNextPage();
-        }, [fetchNextPage, hasNextPage, isFetchingNextPage])}
-        renderItem={({ item }) => {
-          return (
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: "/audits",
-                  params: { id: item.id, code: item.code, name: item.name },
-                })
-              }
-              className="flex flex-1 rounded-xl border border-white/20 bg-white/10 p-3"
+        onEndReached={handleEndReached}
+        renderItem={({ item }) => (
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: "/audits",
+                params: { id: item.id, code: item.code, name: item.name },
+              })
+            }
+            style={{
+              flex: 1,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: colors.border,
+              backgroundColor: colors.backgroundElement,
+              padding: 12,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: "JetBrainsMono",
+                color: colors.text,
+                fontSize: 15,
+                fontWeight: "700",
+              }}
             >
-              <Text
-                style={{ fontFamily: "JetBrainsMono" }}
-                className="text-white text-base font-bold"
-              >
-                {item.code}
-              </Text>
-              <Text
-                style={{ fontFamily: "JetBrainsMono" }}
-                className="text-white text-sm mt-1"
-              >
-                {item.name}
-              </Text>
-              <Text
-                style={{ fontFamily: "JetBrainsMono" }}
-                className="text-white/90 text-xs mt-2"
-              >
-                Client: {item.client}
-              </Text>
-              <Text
-                style={{ fontFamily: "JetBrainsMono" }}
-                className="text-white/90 text-xs"
-              >
-                Country: {item.country}
-              </Text>
-            </Pressable>
-          );
-        }}
+              {item.code}
+            </Text>
+            <Text
+              style={{
+                fontFamily: "JetBrainsMono",
+                color: colors.text,
+                fontSize: 13,
+                marginTop: 4,
+              }}
+            >
+              {item.name}
+            </Text>
+            <Text
+              style={{
+                fontFamily: "JetBrainsMono",
+                color: colors.textSecondary,
+                fontSize: 11,
+                marginTop: 8,
+              }}
+            >
+              Client: {item.client}
+            </Text>
+            <Text
+              style={{
+                fontFamily: "JetBrainsMono",
+                color: colors.textSecondary,
+                fontSize: 11,
+              }}
+            >
+              Country: {item.country}
+            </Text>
+          </Pressable>
+        )}
         ListFooterComponent={
           isFetchingNextPage ? (
             <View style={{ paddingVertical: 10, alignItems: "center" }}>
-              <ActivityIndicator size="small" color="white" />
+              <ActivityIndicator size="small" color={colors.accent} />
               <Text
-                style={{ fontFamily: "JetBrainsMono" }}
-                className="text-white/80 text-xs mt-2"
+                style={{
+                  fontFamily: "JetBrainsMono",
+                  color: colors.textSecondary,
+                  fontSize: 11,
+                  marginTop: 8,
+                }}
               >
                 Loading more stores...
               </Text>
@@ -374,12 +434,44 @@ export default function Stores() {
           ) : null
         }
         ListEmptyComponent={
-          <Text
-            style={{ fontFamily: "JetBrainsMono" }}
-            className="text-white/80 text-center mt-8"
+          <View
+            style={{
+              alignItems: "center",
+              justifyContent: "center",
+              marginTop: 48,
+              paddingHorizontal: 24,
+            }}
           >
-            No stores found.
-          </Text>
+            <MaterialIcons
+              name="store"
+              size={80}
+              color={colors.textSecondary}
+              style={{ opacity: 0.4, marginBottom: 16 }}
+            />
+            <Text
+              style={{
+                fontFamily: "JetBrainsMono",
+                color: colors.textSecondary,
+                textAlign: "center",
+                fontSize: 14,
+                fontWeight: "600",
+              }}
+            >
+              No stores found.
+            </Text>
+            <Text
+              style={{
+                fontFamily: "JetBrainsMono",
+                color: colors.textSecondary,
+                textAlign: "center",
+                fontSize: 12,
+                marginTop: 8,
+                opacity: 0.7,
+              }}
+            >
+              Try adjusting your search filters
+            </Text>
+          </View>
         }
       />
     </View>
