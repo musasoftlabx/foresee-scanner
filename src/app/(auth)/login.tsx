@@ -432,6 +432,12 @@ export default function LoginScreen() {
                 )}
               </TouchableOpacity>
 
+              {/* <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>Or continue with</Text>
+              <View style={styles.dividerLine} />
+            </View> */}
+
               {isCompatible && !isAuthenticated && (
                 <Pressable onPress={handleBiometricAuth}>
                   <MaterialIcons
