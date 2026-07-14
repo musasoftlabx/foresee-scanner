@@ -32,6 +32,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (__DEV__)
+      // biome-ignore lint/correctness/useHookAtTopLevel: <no solution as of now>
       Reactotron.configure({ name: "Foresee Scanner" })
         .useReactNative()
         .connect();
@@ -101,6 +102,7 @@ export default function RootLayout() {
           </Stack.Protected>
 
           <Stack.Protected guard={isLoggedIn}>
+            <Stack.Screen name="(tabs)" options={{ title: "Drawer" }} />
             <Stack.Screen name="audits" options={{ title: "Audits" }} />
             <Stack.Screen name="locations" options={{ title: "Locations" }} />
             <Stack.Screen name="location" options={{ title: "Location" }} />
