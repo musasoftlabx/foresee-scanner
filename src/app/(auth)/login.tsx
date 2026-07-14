@@ -217,7 +217,7 @@ export default function LoginScreen() {
           </View>
 
           <View
-            className="rounded-[26px] p-6 border"
+            className="rounded-[26px] p-6 pb-0 border"
             style={{
               backgroundColor: colors.backgroundElement,
               borderColor: colors.border,
@@ -232,16 +232,16 @@ export default function LoginScreen() {
               className="text-xs uppercase mb-2 tracking-[1.2px]"
               style={{
                 color: colors.accent,
-                fontFamily: "JetBrainsMono-Regular",
+                fontFamily: "JetBrainsMono",
               }}
             >
               Welcome Back
             </Text>
             <Text
-              className="text-[30px] font-bold mb-2 tracking-[0.4px]"
+              className="text-[30px] mb-2 tracking-[0.4px]"
               style={{
                 color: colors.text,
-                fontFamily: "JetBrainsMono-Regular",
+                fontFamily: "JetBrainsMono-Bold",
               }}
             >
               Sign In
@@ -250,7 +250,7 @@ export default function LoginScreen() {
               className="text-[13px] mb-5.5 leading-5"
               style={{
                 color: colors.textSecondary,
-                fontFamily: "JetBrainsMono-Regular",
+                fontFamily: "JetBrainsMono",
               }}
             >
               Access your store audits, scans, and reconciliation workflow.
@@ -259,10 +259,10 @@ export default function LoginScreen() {
             <View className="mb-5">
               <View className="mb-4">
                 <Text
-                  className="text-xs font-semibold mb-2 tracking-[0.5px] uppercase"
+                  className="text-xs mb-2 tracking-[0.5px] uppercase"
                   style={{
                     color: colors.accent,
-                    fontFamily: "JetBrainsMono-Regular",
+                    fontFamily: "JetBrainsMono-Bold",
                   }}
                 >
                   EMAIL ADDRESS
@@ -319,7 +319,7 @@ export default function LoginScreen() {
                   className="text-xs font-semibold mb-2 tracking-[0.5px] uppercase"
                   style={{
                     color: colors.accent,
-                    fontFamily: "JetBrainsMono-Regular",
+                    fontFamily: "JetBrainsMono-Bold",
                   }}
                 >
                   PASSWORD
@@ -348,7 +348,7 @@ export default function LoginScreen() {
                           className="flex-1 px-2.5 py-3 text-base"
                           style={{
                             color: colors.text,
-                            fontFamily: "JetBrainsMono-Regular",
+                            fontFamily: "JetBrainsMono",
                           }}
                           placeholder="••••••••"
                           placeholderTextColor={colors.textSecondary}
@@ -372,7 +372,7 @@ export default function LoginScreen() {
                       {errors.password && (
                         <Text
                           className="text-xs text-red-500 mt-1.5 px-1"
-                          style={{ fontFamily: "JetBrainsMono-Regular" }}
+                          style={{ fontFamily: "JetBrainsMono" }}
                         >
                           {errors.password.message}
                         </Text>
@@ -421,10 +421,10 @@ export default function LoginScreen() {
                   <ActivityIndicator color={colors.background} size="small" />
                 ) : (
                   <Text
-                    className="text-base font-bold tracking-[0.5px]"
+                    className="text-base tracking-[0.5px]"
                     style={{
                       color: colors.background,
-                      fontFamily: "JetBrainsMono-Regular",
+                      fontFamily: "JetBrainsMono-Bold",
                     }}
                   >
                     Sign In
@@ -432,19 +432,30 @@ export default function LoginScreen() {
                 )}
               </TouchableOpacity>
 
-              {/* <View style={styles.dividerContainer}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>Or continue with</Text>
-              <View style={styles.dividerLine} />
-            </View> */}
+              <View className="flex-row items-center mx-5 mt-10 mb-3">
+                <View
+                  className="flex-1 h-px"
+                  style={{ backgroundColor: colors.border }}
+                />
+                <Text
+                  className="px-3 text-[12px] text-[#98bfca]"
+                  style={{ fontFamily: "JetBrainsMono-Bold" }}
+                >
+                  Or use biometric authentication
+                </Text>
+                <View
+                  className="flex-1 h-px"
+                  style={{ backgroundColor: colors.border }}
+                />
+              </View>
 
               {isCompatible && !isAuthenticated && (
                 <Pressable onPress={handleBiometricAuth}>
                   <MaterialIcons
                     name="fingerprint"
-                    size={32}
+                    size={48}
                     color={colors.accent}
-                    style={{ alignSelf: "center", marginTop: 20 }}
+                    style={{ alignSelf: "center" }}
                   />
                 </Pressable>
               )}
