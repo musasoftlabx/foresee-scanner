@@ -1,3 +1,10 @@
+if (__DEV__)
+  // biome-ignore lint/correctness/useHookAtTopLevel: <no solution as of now>
+  Reactotron.setAsyncStorageHandler(AsyncStorage)
+    .configure({ name: "Foresee Scanner" })
+    .useReactNative({ asyncStorage: true })
+    .connect();
+
 import {
   DarkTheme,
   DefaultTheme,
@@ -7,36 +14,25 @@ import {
 } from "expo-router";
 import "@/global.css";
 import { Appearance, useColorScheme } from "react-native";
-//import { HeroUINativeProvider } from "heroui-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as Device from "expo-device";
 import { useThemeStore } from "@/store/theme";
 import { useAuthStore } from "@/store/auth";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
-import AppTabs from "@/components/app-tabs";
 import { useFonts } from "expo-font";
 import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Reactotron from "reactotron-react-native";
 import axios from "axios";
 import { ENDPOINT } from "@/store/default";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const { preference } = useThemeStore();
   const { isLoggedIn, user } = useAuthStore();
-  const role = user?.role ?? "";
-
-  useEffect(() => {
-    if (__DEV__)
-      // biome-ignore lint/correctness/useHookAtTopLevel: <no solution as of now>
-      Reactotron.configure({ name: "Foresee Scanner" })
-        .useReactNative()
-        .connect();
-  }, []);
 
   useEffect(() => {
     if (preference === "system") {
@@ -45,10 +41,6 @@ export default function RootLayout() {
       Appearance.setColorScheme(preference);
     }
   }, [preference]);
-
-  // const [loaded, error] = useFonts({
-  //   JetBrainsMono: require("../../assets/fonts/JetBrainsMono-Regular.ttf"),
-  // });
 
   const [loaded, error] = useFonts({
     JetBrainsMono: require("../../assets/fonts/JetBrainsMono-Regular.ttf"),

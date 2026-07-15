@@ -31,6 +31,9 @@ import axios, { AxiosError } from "axios";
 // * Hooks
 import { useTheme } from "@/hooks/use-theme";
 
+// * Stores
+import { useAuthStore } from "@/store/auth";
+
 // * Components
 import ListEmptyComponent from "@/components/list-empty-component";
 import ListFooterComponent from "@/components/list-footer-component";
@@ -54,9 +57,13 @@ export default function Stores() {
   const { width, height } = useWindowDimensions();
   const navigation = useNavigation();
   const router = useRouter();
+  const { organizations } = useAuthStore();
 
   // ? Constants
-  const PAGE_SIZE = height / 50;
+  const PAGE_SIZE = 20; //height / 50;
+  const activeOrganization =
+    organizations?.find((org) => org.isActive)?.name ??
+    "No active organization";
 
   // ? State
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,18 +80,25 @@ export default function Stores() {
     fetchNextPage,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ["stores"],
+    queryKey: ["stores", organizations?.find((org) => org.isActive)?.id],
     queryFn: async ({ queryKey, pageParam: offset }): Promise<StoresPage> => {
-      const response = await axios(
-        `${queryKey[0]}?limit=20&offset=0&refines={%22filterModel%22:{%22items%22:[],%22logicOperator%22:%22and%22,%22quickFilterValues%22:[],%22quickFilterLogicOperator%22:%22and%22},%22sortModel%22:[{%22field%22:%22name%22,%22sort%22:%22asc%22}]}`,
-        {
-          params: {
-            limit: PAGE_SIZE,
-            offset,
-            page: Math.floor(offset / PAGE_SIZE) + 1,
-          },
+      const response = await axios(`${queryKey[0]}`, {
+        params: {
+          organizationId: queryKey[1],
+          limit: PAGE_SIZE,
+          offset,
+          page: Math.floor(offset / PAGE_SIZE) + 1,
+          refines: JSON.stringify({
+            sortModel: [{ field: "name", sort: "asc" }],
+            filterModel: {
+              items: [],
+              logicOperator: "and",
+              quickFilterValues: [],
+              quickFilterLogicOperator: "and",
+            },
+          }),
         },
-      );
+      });
 
       const payload = response.data;
       const stores: Store[] = payload.dataset;
@@ -165,11 +179,11 @@ export default function Stores() {
             width: Math.max(width - 64, 220),
             flexDirection: "row",
             alignItems: "center",
-            paddingHorizontal: 20,
-            borderWidth: 1,
+            paddingHorizontal: 10,
             borderColor: "rgba(255,255,255,0.3)",
-            borderRadius: 50,
-            backgroundColor: "rgba(0,0,0,0.15)",
+            //borderWidth: 1,
+            //borderRadius: 50,
+            //backgroundColor: "rgba(0,0,0,0.15)",
           }}
         >
           <Octicons name="search" size={20} color={`${colors.headerTint}99`} />
@@ -323,7 +337,7 @@ export default function Stores() {
               fontFamily: "JetBrainsMono-ExtraBold",
             }}
           >
-            M
+            {activeOrganization.charAt(0).toUpperCase()}
           </Text>
         </View>
 
@@ -341,7 +355,7 @@ export default function Stores() {
             className="text-xl"
             style={{ color: colors.text, fontFamily: "JetBrainsMono" }}
           >
-            Musasoft Labs
+            {activeOrganization}
           </Text>
         </View>
       </View>

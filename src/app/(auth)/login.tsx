@@ -119,10 +119,7 @@ export default function LoginScreen() {
 
   // ? Mutations
   const { mutate: loginMutation, isPending } = useMutation({
-    mutationFn: async (creds: Schema) => {
-      const response = await axios.post("/login", creds);
-      return response.data;
-    },
+    mutationFn: async (creds: Schema) => await axios.post("/login", creds),
   });
 
   // ? Theme-aware gradient colors
@@ -197,10 +194,10 @@ export default function LoginScreen() {
               />
             </View>
             <Text
-              className="text-4xl font-bold tracking-wide"
+              className="text-4xl tracking-wide"
               style={{
-                fontFamily: "JetBrainsMono-Regular",
                 color: colors.text,
+                fontFamily: "JetBrainsMono-Bold",
               }}
             >
               Foresee Scanner
@@ -209,10 +206,10 @@ export default function LoginScreen() {
               className="mt-1.5 text-[13px] tracking-[0.4px]"
               style={{
                 color: colors.textSecondary,
-                fontFamily: "JetBrainsMono-Regular",
+                fontFamily: "JetBrainsMono",
               }}
             >
-              Field Inventory Intelligence
+              Your Inventory Intelligence Partner
             </Text>
           </View>
 
@@ -230,10 +227,7 @@ export default function LoginScreen() {
           >
             <Text
               className="text-xs uppercase mb-2 tracking-[1.2px]"
-              style={{
-                color: colors.accent,
-                fontFamily: "JetBrainsMono",
-              }}
+              style={{ color: colors.accent, fontFamily: "JetBrainsMono" }}
             >
               Welcome Back
             </Text>
@@ -400,10 +394,8 @@ export default function LoginScreen() {
                       ),
                     },
                     {
-                      onSuccess: (data) => {
-                        login(data);
-                        router.replace("/(tabs)/stores");
-                      },
+                      onSuccess: ({ data: { _foresee_aT, organizations } }) =>
+                        login({ token: _foresee_aT, organizations }),
                       onError: (error: unknown) =>
                         Alert.alert(
                           "Login Failed",

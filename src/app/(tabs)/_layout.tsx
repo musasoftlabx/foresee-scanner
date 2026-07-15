@@ -1,185 +1,201 @@
+// * React
+// biome-ignore assist/source/organizeImports: <ignore lint: false positive>
+import { useEffect, useState } from "react";
+
+// * React Native
+import { Pressable, Text, TouchableOpacity, View } from "react-native";
+
+// * Libraries
+import { useQueryClient } from "@tanstack/react-query";
+
+// * Expo
+import { DrawerContentScrollView, DrawerItemList } from "expo-router/drawer";
 import Drawer from "expo-router/drawer";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { Alert, Pressable, Text, View } from "react-native";
-import {
-  DrawerContentScrollView,
-  DrawerItemList,
-  type DrawerContentComponentProps,
-} from "expo-router/drawer";
+
+// * Hooks
 import { useTheme } from "@/hooks/use-theme";
+
+// * Components
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useNavigation, useRouter } from "expo-router";
 
-const ORGANIZATIONS = ["MusaSoft Labs", "Foresee Retail", "Field Ops East"];
+// * Stores
+import { useAuthStore } from "@/store/auth";
 
-function AppDrawerContent(props: DrawerContentComponentProps) {
+export default function DrawerLayout() {
   const { colors, isDark } = useTheme();
-  const navigation = useNavigation();
-  const router = useRouter();
+  const { user, organizations, logout, changeActiveOrganization } =
+    useAuthStore();
+  const queryClient = useQueryClient();
 
-  return (
-    <DrawerContentScrollView
-      {...props}
-      contentContainerStyle={{
-        flexGrow: 1,
-        backgroundColor: colors.drawerBackground,
-        paddingTop: 0,
-      }}
-    >
-      <View
-        style={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 18 }}
-      >
-        <View
-          style={{
-            width: 58,
-            height: 58,
-            borderRadius: 29,
-            backgroundColor: isDark
-              ? "rgba(196,181,253,0.15)"
-              : "rgba(147,51,234,0.12)",
-            borderWidth: 1,
-            borderColor: isDark
-              ? "rgba(196,181,253,0.3)"
-              : "rgba(147,51,234,0.25)",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <MaterialIcons
-            name="person"
-            size={28}
-            color={isDark ? "#ddd6fe" : "#6d28d9"}
-          />
-        </View>
-        <Text
-          style={{
-            fontFamily: "JetBrainsMono",
-            marginTop: 12,
-            color: colors.text,
-            fontSize: 15,
-          }}
-        >
-          John Scanner
-        </Text>
-      </View>
+  const [newOrganizations, setNewOrganizations] =
+    useState<typeof organizations>(organizations);
 
-      <View style={{ borderTopWidth: 1, borderTopColor: colors.border }}>
-        <DrawerItemList {...props} />
-      </View>
-
-      <View style={{ paddingHorizontal: 16, marginTop: 18 }}>
-        <Text
-          style={{
-            fontFamily: "JetBrainsMono",
-            color: colors.textSecondary,
-            fontSize: 11,
-            marginBottom: 8,
-          }}
-        >
-          Organizations
-        </Text>
-        {ORGANIZATIONS.map((organization) => (
-          <View
-            key={organization}
-            style={{
-              borderRadius: 8,
-              borderWidth: 1,
-              borderColor: colors.border,
-              backgroundColor: isDark
-                ? "rgba(196,181,253,0.08)"
-                : "rgba(147,51,234,0.06)",
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              marginBottom: 8,
-            }}
-          >
-            <Text
-              style={{
-                fontFamily: "JetBrainsMono",
-                color: colors.text,
-                fontSize: 12,
-              }}
-            >
-              {organization}
-            </Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Theme toggle */}
-      <View
-        style={{
-          paddingHorizontal: 16,
-          marginTop: 16,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Text
-          style={{
-            fontFamily: "JetBrainsMono",
-            color: colors.textSecondary,
-            fontSize: 11,
-          }}
-        >
-          Appearance
-        </Text>
-        <ThemeToggle size={15} />
-      </View>
-
-      <View
-        style={{ marginTop: "auto", paddingHorizontal: 16, paddingBottom: 20 }}
-      >
-        <Pressable
-          onPress={() => router.replace("/(auth)/login")}
-          //onPress={() => navigation.navigate("/(auth)/login")}
-          style={{
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: "rgba(252,165,165,0.35)",
-            backgroundColor: "rgba(239,68,68,0.15)",
-            paddingHorizontal: 16,
-            paddingVertical: 12,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <MaterialIcons name="logout" size={16} color="#fca5a5" />
-            <Text
-              style={{
-                fontFamily: "JetBrainsMono",
-                color: "#fca5a5",
-                fontSize: 12,
-                marginLeft: 8,
-              }}
-            >
-              Logout
-            </Text>
-          </View>
-        </Pressable>
-      </View>
-    </DrawerContentScrollView>
-  );
-}
-
-export default function TabLayout() {
-  const { colors } = useTheme();
+  useEffect(() => {
+    changeActiveOrganization(newOrganizations);
+    queryClient.refetchQueries({
+      queryKey: ["stores", newOrganizations.find((org) => org.isActive)?.id],
+    });
+  }, [newOrganizations]);
 
   return (
     <Drawer
-      drawerContent={(props) => <AppDrawerContent {...props} />}
+      drawerContent={(props) => (
+        <DrawerContentScrollView
+          {...props}
+          contentContainerStyle={{
+            flexGrow: 1,
+            backgroundColor: colors.drawerBackground,
+            paddingTop: 0,
+          }}
+        >
+          <View className="px-1 pt-6 pb-4">
+            <View
+              className="rounded-full border items-center justify-center size-14"
+              style={{
+                backgroundColor: isDark
+                  ? "rgba(196,181,253,0.15)"
+                  : "rgba(147,51,234,0.12)",
+                borderColor: isDark
+                  ? "rgba(196,181,253,0.3)"
+                  : "rgba(147,51,234,0.25)",
+              }}
+            >
+              <MaterialIcons
+                name="person"
+                size={28}
+                color={isDark ? "#ddd6fe" : "#6d28d9"}
+              />
+            </View>
+            <Text
+              className="mt-2 text-xl"
+              style={{
+                color: colors.textSecondary,
+                fontFamily: "JetBrainsMono-Bold",
+              }}
+            >
+              {user?.firstName} {user?.lastName}
+            </Text>
+            <Text
+              className="text-[14px] tracking-[1.2px]"
+              style={{
+                color: `${colors.textSecondary}95`,
+                fontFamily: "JetBrainsMono",
+              }}
+            >
+              {user?.roles[0]}
+            </Text>
+          </View>
+
+          <View
+            className="border-t pt-2"
+            style={{ borderTopColor: colors.border }}
+          >
+            <DrawerItemList {...props} />
+          </View>
+
+          {newOrganizations.length > 0 ? (
+            <View className="mt-4 px-4">
+              <Text
+                className="mb-2 text-[11px] tracking-[1.2px]"
+                style={{
+                  fontFamily: "JetBrainsMono",
+                  color: colors.textSecondary,
+                }}
+              >
+                Organizations
+              </Text>
+
+              {newOrganizations.map(({ id, name, isActive }) => (
+                <TouchableOpacity
+                  key={id}
+                  className="mb-2 rounded-lg border px-3 py-2"
+                  onPress={() => {
+                    props.navigation.closeDrawer();
+                    setNewOrganizations((prev) =>
+                      prev.map((org) =>
+                        org.id === id
+                          ? { ...org, isActive: true }
+                          : { ...org, isActive: false },
+                      ),
+                    );
+                  }}
+                  style={{
+                    backgroundColor: isActive
+                      ? colors.accent
+                      : colors.backgroundElement,
+                    borderColor: colors.border,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: isActive ? colors.background : colors.text,
+                      fontFamily: isActive
+                        ? "JetBrainsMono-Bold"
+                        : "JetBrainsMono",
+                      fontSize: 12,
+                    }}
+                  >
+                    {name}
+                  </Text>
+
+                  <MaterialIcons
+                    name={isActive ? "check-circle" : "circle"}
+                    size={16}
+                    color={isActive ? colors.background : colors.textSecondary}
+                    style={{ position: "absolute", right: 8, top: 8 }}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null}
+
+          <View className="flex-row justify-between items-center mt-4 px-4">
+            <Text
+              className="text-[11px] tracking-[1.2px]"
+              style={{
+                color: colors.textSecondary,
+                fontFamily: "JetBrainsMono",
+              }}
+            >
+              Appearance
+            </Text>
+            <ThemeToggle size={15} />
+          </View>
+
+          <View className="px-4 pb-5 mt-auto">
+            <Pressable
+              onPress={logout}
+              className="rounded-lg border px-4 py-3"
+              style={{
+                borderColor: "rgba(252,165,165,0.35)",
+                backgroundColor: "rgba(239,68,68,0.15)",
+              }}
+            >
+              <View className="flex-row items-center justify-center">
+                <MaterialIcons name="logout" size={16} color="#fca5a5" />
+                <Text
+                  className="ml-2 text-[13px] tracking-[1.2px]"
+                  style={{ color: "#fca5a5", fontFamily: "JetBrainsMono" }}
+                >
+                  LOGOUT
+                </Text>
+              </View>
+            </Pressable>
+          </View>
+        </DrawerContentScrollView>
+      )}
       screenOptions={{
         headerStyle: { backgroundColor: colors.headerBackground },
         headerTintColor: colors.headerTint,
-        drawerStyle: { backgroundColor: colors.drawerBackground },
+        drawerStyle: {
+          backgroundColor: colors.drawerBackground,
+          maxWidth: "75%",
+        },
         drawerActiveTintColor: colors.drawerActiveTint,
         drawerInactiveTintColor: colors.drawerInactiveTint,
+        drawerLabelStyle: { fontFamily: "JetBrainsMono", fontSize: 14 },
+        drawerItemStyle: { marginVertical: 3, borderRadius: 8 },
       }}
     >
       <Drawer.Screen
@@ -188,7 +204,7 @@ export default function TabLayout() {
           title: "Stores",
           headerShown: true,
           drawerIcon: ({ color }) => (
-            <MaterialIcons size={28} name="store" color={color} />
+            <MaterialIcons size={24} name="store" color={color} />
           ),
         }}
       />
